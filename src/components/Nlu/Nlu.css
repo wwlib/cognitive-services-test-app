@@ -1,0 +1,41 @@
+.Nlu {
+  background-color: #282c34;
+  text-align: center;
+  color: white;
+}
+
+.Nlu textarea {
+  width: 500px;
+  margin: auto;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.Nlu #nluInput {
+  margin: auto;
+  width: 500px;
+}
+
+.Nlu-row {
+  margin-top: 6px;
+}
+
+.Nlu-body {
+  background-color: #282c34;
+}
+
+.Nlu-link {
+  color: #61dafb;
+}
+
+.Nlu-button {
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
+.Tabs {
+  padding: 6px;
+}

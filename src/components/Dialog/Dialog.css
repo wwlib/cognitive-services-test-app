@@ -1,0 +1,51 @@
+.Dialog {
+  background-color: #282c34;
+  /* text-align: center; */
+  color: white;
+}
+
+.Dialog-chat textarea {
+  width: 500px;
+  margin: auto;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.Dialog-row {
+  margin-top: 6px;
+}
+
+.Dialog-messages textarea {
+  width: 500px;
+  margin: auto;
+  margin-top: 100px;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.Dialog #dialogInput {
+  margin: auto;
+  width: 500px;
+}
+
+.Dialog-body {
+  background-color: #282c34;
+}
+
+.Dialog-link {
+  color: #61dafb;
+}
+
+.Dialog-button {
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
+.Tabs {
+  padding: 6px;
+}

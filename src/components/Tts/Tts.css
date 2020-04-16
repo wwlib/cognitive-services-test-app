@@ -1,0 +1,41 @@
+.Tts {
+  background-color: #282c34;
+  text-align: center;
+  color: white;
+}
+
+.Tts textarea {
+  width: 500px;
+  margin: auto;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.Tts #ttsInput {
+  margin: auto;
+  width: 500px;
+}
+
+.Tts-row {
+  margin-top: 6px;
+}
+
+.Tts-body {
+  background-color: #282c34;
+}
+
+.Tts-link {
+  color: #61dafb;
+}
+
+.Tts-button {
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
+.Tabs {
+  padding: 6px;
+}
