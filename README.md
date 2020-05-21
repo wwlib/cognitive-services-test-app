@@ -19,13 +19,8 @@ yarn rebuild (necessry to use grpc, see `electron & grpc` below)
 yarn build
 yarn start
 ```
-Then
-- Go to the Dialog page
-- Click `Start Dialog`
-- Type "hello" and click `Submit`
-- Click `Start Asr` and say: "I want to check in."
-- Click `Stop Asr`
-- Click `Submit`
+
+(Again, this is app is a shell. Actual service integration is not implemented.)
 
 #### raspberry pi notes
 cognitive-services-test-app runs nicely on a Raspberry Pi B 3+

@@ -71,7 +71,7 @@
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git@github.com:wwlib/cognitive-services-test-app.git"
   },
   "keywords": [
     "react,create-react-app,cra,craco,electron,electron-builder"
