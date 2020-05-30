@@ -29,3 +29,6 @@ data/config.json
 
 .ipynb_checkpoints
 .vscode
+
+/*.wav
+/*.raw
