@@ -1,21 +1,9 @@
 import React, { Component } from 'react';
-import WaveFile from 'wavefile';
+import { AudioSource, AudioSink, CognitiveServicesConfigOptions } from 'cognitiveserviceslib';
+
 import './App.css';
 import Logo from './components/Logo/Logo';
-import MicrophoneAudioSource, { MicrophoneAudioSourceOptions } from './audio/MicrophoneAudioSource';
-import WaveFileAudioSource, { WaveFileAudioSourceOptions } from './audio/WaveFileAudioSource';
-import AsrController from './services/ASRController';
-import TtsController from './services/TtsController';
-import NluController, { NluResult, NluEntity } from './services/NluController';
-import DialogController from './services/DialogController';
-import AudioContextAudioSink from './audio/AudioContextAudioSink';
-import AudioWaveformVisualizer from './components/AudioWaveformVisualizer/AudioWaveformVisualizer';
-import AudioEqVisualizer from './components/AudioEqVisualizer/AudioEqVisualizer';
-import AudioSource from './audio/AudioSource';
-import AudioSink from './audio/AudioSink';
-
 import Model from './model/Model';
-import { AppSettingsOptions } from './model/AppSettings';
 import Log from './utils/Log';
 
 //panel components
@@ -23,7 +11,6 @@ import Settings from './components/Settings/Settings';
 import Asr from './components/Asr/Asr';
 import Nlu from './components/Nlu/Nlu';
 import Tts from './components/Tts/Tts';
-import Dialog from './components/Dialog/Dialog';
 
 interface ServiceCredentials {
   url: string;
@@ -41,11 +28,9 @@ if (process.env.REACT_APP_MODE === 'electron') {
   app = require('electron').remote.app;
 }
 
-const basepath = app.getAppPath();
-
 export interface AppProps { model: Model }
 export interface AppState {
-  settings: AppSettingsOptions;
+  settings: CognitiveServicesConfigOptions;
   activeTab: string;
   message: string;
   visualizerSource: AudioSource | AudioSink | undefined;
@@ -55,26 +40,11 @@ export default class App extends React.Component<AppProps, AppState> {
 
   private _log: Log;
 
-  private _microphoneAudioSource: MicrophoneAudioSource | undefined;
-  private _waveFileAudioSource: WaveFileAudioSource | undefined;
-  private _serviceCredentials: ServiceCredentials;
-  private _asrController: AsrController | undefined;
-  private _ttsController: TtsController | undefined;
-  private _nluController: NluController | undefined;
-  private _dialogController: DialogController | undefined;
-  private _audioContextAudioSink: AudioContextAudioSink | undefined;
-
   constructor(props: AppProps) {
     super(props);
-    this._serviceCredentials = {
-      url: '',
-      username: '',
-      password: '',
-      scope: '',
-    };
     this.state = {
       activeTab: 'Settings',
-      settings: this.props.model.appSettings.json,
+      settings: this.props.model.config.json,
       message: 'Waiting...',
       visualizerSource: undefined
     };
@@ -104,10 +74,10 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   }
 
-  onSettingsChanged(settings: AppSettingsOptions) {
+  onSettingsChanged(settings: CognitiveServicesConfigOptions) {
     this.props.model.setAppParams(settings);
     this.setState({
-      settings: this.props.model.appSettings.json
+      settings: this.props.model.config.json
     })
   }
 
@@ -158,7 +128,7 @@ export default class App extends React.Component<AppProps, AppState> {
           <Settings
             model={this.props.model}
             settings={this.state.settings}
-            changed={(settings: AppSettingsOptions) => { this.onSettingsChanged(settings) }}
+            changed={(settings: CognitiveServicesConfigOptions) => { this.onSettingsChanged(settings) }}
             fileHandler={(fileList: any[]) => this.handleUploadFileList(fileList)}
           />
         break;
@@ -180,14 +150,16 @@ export default class App extends React.Component<AppProps, AppState> {
             model={this.props.model}
           />
         break;
-      case 'Dialog':
-        activeTab =
-          <Dialog
-            model={this.props.model}
-          />
-        break;
     }
     return activeTab;
+  }
+
+  getButtonStyle(buttonName: string): string {
+    let style: string = 'btn btn-primary';
+    if (buttonName === this.state.activeTab) {
+      style = 'btn btn-info';
+    }
+    return style;
   }
 
   render() {
@@ -196,25 +168,21 @@ export default class App extends React.Component<AppProps, AppState> {
         <header className="App-header">
           <Logo />
           <div className='App-nav-tabs'>
-            <button id='btn_settings' type='button' className={`btn btn-info`}
+            <button id='btn_settings' type='button' className={this.getButtonStyle('Settings')}
               onClick={(event) => this.onTabButtonClicked(`tabSettings`, event)}>
               Settings
                 </button>
-            <button id='btn_asr' type='button' className='btn btn-primary'
+            <button id='btn_asr' type='button' className={this.getButtonStyle('Asr')}
               onClick={(event) => this.onTabButtonClicked(`tabAsr`, event)}>
               Asr
                 </button>
-            <button id='btn_nlu' type='button' className='btn btn-primary'
+            <button id='btn_nlu' type='button' className={this.getButtonStyle('Nlu')}
               onClick={(event) => this.onTabButtonClicked(`tabNlu`, event)}>
               Nlu
                 </button>
-            <button id='btn_tts' type='button' className='btn btn-primary'
+            <button id='btn_tts' type='button' className={this.getButtonStyle('Tts')}
               onClick={(event) => this.onTabButtonClicked(`tabTts`, event)}>
               Tts
-                </button>
-            <button id='btn_dialog' type='button' className='btn btn-primary'
-              onClick={(event) => this.onTabButtonClicked(`tabDialog`, event)}>
-              Dialog
                 </button>
           </div>
         </header>

@@ -25,6 +25,7 @@ yarn-error.log*
 .DS_Store
 hide
 dist/*
+data/config.json
 
 .ipynb_checkpoints
 .vscode

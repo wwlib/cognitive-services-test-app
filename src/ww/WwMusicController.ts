@@ -3,7 +3,7 @@ import  { AudioInstrument, AudioNote, InstrumentManager, MidiToMediaPlayer } fro
 
 const fs = require('fs');
 const path = require('path');
-const root = PathUtils.findRoot(__dirname); // path.resolve(__dirname);
+const root = PathUtils.findRoot(); // path.resolve(__dirname);
 const dirname = path.basename(root)
 const configFile = path.resolve(root, 'audio/instrument_config.json');
 // const configFile = root + '/data/instrument_config.json';
