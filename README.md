@@ -1,8 +1,8 @@
 ### cognitive-services-test-app
 
-*cognitive-services-test-app* is a electron/typescript/gRPC app for testing cognitive services.
+*cognitive-services-test-app* is an electron/typescript app for testing cognitive services.
 
-(Just a shell. Add your own service specifics...)
+Azure services are implemented via the cognitiveserviceslib module (https://github.com/wwlib/cognitiveserviceslib).
 
 ![cognitive-services-test-app](./docs/cognitive-services-test-app.png)
 
