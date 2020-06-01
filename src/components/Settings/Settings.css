@@ -7,3 +7,11 @@
 .Settings .label {
   color: #cccccc;
 }
+
+.SettingsGroup {
+}
+
+.SettingsItem {
+  width: 750px;
+  margin-left: 100px;
+}

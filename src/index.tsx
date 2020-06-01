@@ -3,19 +3,10 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import './css/bootstrap.min.css';
 import './css/font-awesome.min.css';
-import './css/style.css'; // florence app global css
 
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import Model from './model/Model';
-
-// Define Resampler globally
-require('./js/resampler_node.js');
-
-declare const global: {
-  Resampler: any;
-}
-// console.log(`global.Resampler:`, global.Resampler);
 
 const model: Model = new Model();
 

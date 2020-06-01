@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
-import './Nlu.css';
-import NluController, { NluResult, NluEntity } from '../../services/NluController';
+import { LUISController } from 'cognitiveserviceslib';
 
+import './Nlu.css';
 import Model from '../../model/Model';
-import { AppSettingsOptions } from '../../model/AppSettings';
 import Log from '../../utils/Log';
 
 interface ServiceCredentials {
@@ -15,7 +14,6 @@ interface ServiceCredentials {
 
 export interface NluProps { model: Model }
 export interface NluState {
-  settings: AppSettingsOptions;
   nluInput: string;
   message: string;
 }
@@ -24,22 +22,16 @@ export default class Nlu extends React.Component<NluProps, NluState> {
 
   private _log: Log;
 
-  private _serviceCredentials: ServiceCredentials;
-  private _nluController: NluController | undefined;
+  private _nluController: LUISController | undefined;
 
   private _onChangeHandler: any = (event: any) => this.onChangeHandler(event);
   private _onBlurHandler: any = (event: any) => this.onBlurHandler(event);
 
   constructor(props: NluProps) {
     super(props);
-    this._serviceCredentials = {
-      url: this.props.model.appSettings.authUrl,
-      username: this.props.model.appSettings.authUsername,
-      password: this.props.model.appSettings.authPassword,
-      scope: this.props.model.appSettings.authScope,
-    };
+    this._nluController = new LUISController(this.props.model.config.json);
     this.state = {
-      settings: this.props.model.appSettings.json,
+      // settings: this.props.model.config.json,
       nluInput: '',
       message: 'Waiting...',
     };
@@ -54,24 +46,28 @@ export default class Nlu extends React.Component<NluProps, NluState> {
 
     switch (action) {
       case 'btnNluStart':
-        this._nluController = new NluController(this._serviceCredentials);
-        this._nluController.on('data', (data: any) => {
-          console.log(`on data:`, data);
-        });
-        this._nluController.on('end', () => {
-          console.log(`on end`);
-        });
-        this._nluController.on('done', (data: any) => {
-          console.log(`*** DONE ***`);
-          console.log(JSON.stringify(data.nluResult, null, 2));
-          const output: string = JSON.stringify(data.nluResult, null, 2);
-          this.setState({
-            message: output
+        let timeLog: any = {
+          timeStart: new Date().getTime(),
+        }
+        const token = this._nluController.getIntentAndEntities(this.state.nluInput);
+        token.complete
+          .then((intentAndEntities) => {
+            timeLog.complete = new Date().getTime();
+            timeLog.cloudLatency = timeLog.complete - timeLog.timeStart;
+            const messageData: any = {
+              timeLog,
+              intentAndEntities,
+            }
+            const message: string = JSON.stringify(messageData, null, 2);
+            this.setState({
+              message: message
+            });
+          })
+          .catch((error) => {
+            this.setState({
+              message: error
+            });
           });
-          this._nluController.dispose();
-          this._nluController = undefined;
-        });
-        this._nluController.start(this.state.nluInput, this.props.model.appSettings.nluId, this.props.model.appSettings.nluType, this.props.model.appSettings.nluUri);
         this.setState({
           message: `nlu: started`
         });

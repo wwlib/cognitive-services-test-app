@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
+import { AudioSource, AudioSink } from 'cognitiveserviceslib';
+
 import './AudioWaveformVisualizer.css';
-import AudioSource from '../../audio/AudioSource';
-import AudioSink from '../../audio/AudioSink';
 
 export interface AudioWaveformVisualizerOptions {
   w: number,

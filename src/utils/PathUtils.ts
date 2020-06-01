@@ -1,17 +1,14 @@
 import path from 'path';
-// const findRoot = require('find-root');
-// const normalize = require('normalize-path');
 const electronApp = require('electron').remote.app;
 
 class PathUtils {
 
-    static findRoot(uri: string): string {
-        // return findRoot(uri);
+    static findRoot(): string {
         return electronApp.getAppPath()
     }
 
     static resolve(projectUri: string): string {
-        let projectRoot: string = PathUtils.findRoot(__dirname);
+        let projectRoot: string = PathUtils.findRoot();
         return path.resolve(projectRoot, projectUri);
     }
 }

@@ -1,16 +1,18 @@
 import React, { Component } from 'react';
-import WaveFile from 'wavefile';
+import { 
+  AudioSource,
+  AudioSink,
+  AudioContextAudioSink,
+  AzureSpeechClient,
+  AudioUtils,
+} from 'cognitiveserviceslib';
+
 import './Tts.css';
-import TtsController from '../../services/TtsController';
-import AudioContextAudioSink from '../../audio/AudioContextAudioSink';
 import AudioWaveformVisualizer from '../../components/AudioWaveformVisualizer/AudioWaveformVisualizer';
 import AudioEqVisualizer from '../../components/AudioEqVisualizer/AudioEqVisualizer';
-import AudioSource from '../../audio/AudioSource';
-import AudioSink from '../../audio/AudioSink';
-
 import Model from '../../model/Model';
-import { AppSettingsOptions } from '../../model/AppSettings';
 import Log from '../../utils/Log';
+import PathUtils from '../../utils/PathUtils';
 
 let fs: any;
 let path: any;
@@ -21,8 +23,6 @@ if (process.env.REACT_APP_MODE === 'electron') {
   app = require('electron').remote.app;
 }
 
-const basepath = app.getAppPath();
-
 interface ServiceCredentials {
   url: string;
   username: string;
@@ -32,7 +32,6 @@ interface ServiceCredentials {
 
 export interface TtsProps { model: Model }
 export interface TtsState {
-  settings: AppSettingsOptions;
   ttsInput: string;
   message: string;
   visualizerSource: AudioSource | AudioSink | undefined;
@@ -42,8 +41,7 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
 
   private _log: Log;
 
-  private _serviceCredentials: ServiceCredentials;
-  private _ttsController: TtsController | undefined;
+  private _azureSpeechClient: AzureSpeechClient | undefined;
   private _audioContextAudioSink: AudioContextAudioSink | undefined;
 
   private _onChangeHandler: any = (event: any) => this.onChangeHandler(event);
@@ -51,14 +49,8 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
 
   constructor(props: TtsProps) {
     super(props);
-    this._serviceCredentials = {
-      url: this.props.model.appSettings.authUrl,
-      username: this.props.model.appSettings.authUsername,
-      password: this.props.model.appSettings.authPassword,
-      scope: this.props.model.appSettings.authScope,
-    };
+    this._azureSpeechClient = new AzureSpeechClient(this.props.model.config.json);
     this.state = {
-      settings: this.props.model.appSettings.json,
       ttsInput: '',
       message: 'Waiting...',
       visualizerSource: undefined
@@ -76,42 +68,42 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
 
       case 'btnTtsStart':
         this._audioContextAudioSink = new AudioContextAudioSink({
-          sampleRate: 22500
+          sampleRate: 16000
         });
         this._audioContextAudioSink.on('ended', () => {
-          this._ttsController.dispose();
-          this._ttsController = undefined;
-
           let audioData: Int16Array = this._audioContextAudioSink.int16Data
-          // let bytesCaptured = audioData.length;
-          let audioFile = path.resolve(basepath, 'audio_tts.raw');
-          fs.writeFileSync(audioFile, Buffer.from(audioData.buffer));
-          const wav = new WaveFile();
-          wav.fromScratch(1, 22500, '16', audioData);
-          let wavFile = path.resolve(basepath, 'audio_tts.wav');
-          fs.writeFileSync(wavFile, wav.toBuffer());
-
+          AudioUtils.writeAudioData16ToFile(audioData, PathUtils.resolve('audio_tts'));
           this._audioContextAudioSink.dispose();
           this._audioContextAudioSink = undefined;
           this.setState({
-            message: `tts: stopped`,
+            message: `tts: ended`,
             visualizerSource: undefined
           });
         });
-        this._ttsController = new TtsController(this._serviceCredentials);
-        this._ttsController.on('data', (data: any) => {
-          //console.log(data);
-          if (data.response === 'audio' && data.audio) {
-            this._audioContextAudioSink.writeAudio(data.audio);
-          }
-        });
-        this._ttsController.on('end', () => {
-          this._audioContextAudioSink.play();
-        });
-        this._ttsController.start(this.state.ttsInput);
+        this._azureSpeechClient.synthesizeStream(this.state.ttsInput)
+          .then((audioStream: NodeJS.ReadableStream) => {
+            console.log(audioStream);
+            // const file = fs.createWriteStream(PathUtils.resolve('tts-out.wav'));
+            // audioStream.pipe(file);
+            audioStream.on('data', (data: any) => {
+              console.log(`data:`, data);
+              this._audioContextAudioSink.writeAudio(data);
+            });
+            audioStream.on('end', () => {
+              console.log(`Tts: synthesizeStream: end`);
+              this._audioContextAudioSink.play();
+              this.setState({
+                message: `tts: playing:`,
+                visualizerSource: this._audioContextAudioSink
+              });
+            });
+          })
+          .catch((error) => {
+            console.log(`Tts: synthesizeStream: error:`, error);
+          });
         this.setState({
           message: `tts: started:`,
-          visualizerSource: this._audioContextAudioSink
+          visualizerSource: undefined
         });
         break;
     }
@@ -119,7 +111,6 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
 
   onChangeHandler(event: any) {
     const nativeEvent: any = event.nativeEvent;
-    // this.log.debug(nativeEvent);
     let updateObj: any = undefined;
     switch (nativeEvent.target.id) {
       case 'ttsInput':

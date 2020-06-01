@@ -1,53 +1,60 @@
 import React, { Component } from 'react';
-import WaveFile from 'wavefile';
+import {
+  AzureSpeechClient,
+  AudioSourceWaveStreamer,
+  WaveFileAudioSource,
+  AudioSource,
+  AudioSink,
+  MicrophoneAudioSource,
+  MicrophoneAudioSourceOptions,
+  AudioUtils,
+} from 'cognitiveserviceslib';
+
 import './Asr.css';
-import MicrophoneAudioSource, { MicrophoneAudioSourceOptions } from '../../audio/MicrophoneAudioSource';
-import WaveFileAudioSource, { WaveFileAudioSourceOptions } from '../../audio/WaveFileAudioSource';
-import AsrController from '../../services/ASRController';
 import AudioWaveformVisualizer from '../../components/AudioWaveformVisualizer/AudioWaveformVisualizer';
 import AudioEqVisualizer from '../../components/AudioEqVisualizer/AudioEqVisualizer';
-import AudioSource from '../../audio/AudioSource';
-import AudioSink from '../../audio/AudioSink';
-
 import Model from '../../model/Model';
-import { AppSettingsOptions } from '../../model/AppSettings';
 import Log from '../../utils/Log';
-
 import WakewordController from '../../audio/WakewordController';
 import EarconManager, { EarconTone } from '../../audio/EarconManager';
+import PathUtils from '../../utils/PathUtils';
+import Timer from '../../utils/Timer';
+
+// import { createReadStream, read, write } from 'fs';
+// import { PassThrough } from 'stream';
 
 let fs: any;
 let path: any;
-let app: any;
 let dialog: any;
+let createWriteStream: any;
+
 if (process.env.REACT_APP_MODE === 'electron') {
   fs = require('fs-extra');
+  createWriteStream = fs.createWriteStream;
   path = require('path');
-  app = require('electron').remote.app;
   dialog = require('electron').remote.dialog;
-}
-
-const basepath = app.getAppPath();
-
-interface ServiceCredentials {
-  url: string;
-  username: string;
-  password: string;
-  scope: string;
 }
 
 export interface AsrProps { model: Model }
 export interface AsrState {
-  // settings: AppSettingsOptions;
   message: string;
   asrResult: string;
   visualizerSource: AudioSource | AudioSink | undefined;
 }
+
 export interface AsrHypothesis {
-  text: string;
-  confidence: number;
-  avgConfidence: number;
-  rejected: boolean;
+  Confidence: number;
+  Display: string;
+  ITN: string;
+  Lexical: string;
+  MaskedITN: string;
+}
+
+export interface AsrResults {
+  Duration: number;
+  NBest: AsrHypothesis[];
+  Offset: number;
+  RecognitionStatus: string;
 }
 
 export default class Asr extends React.Component<AsrProps, AsrState> {
@@ -56,24 +63,20 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
 
   private _microphoneAudioSource: MicrophoneAudioSource | undefined;
   private _waveFileAudioSource: WaveFileAudioSource | undefined;
-  private _serviceCredentials: ServiceCredentials;
-  private _asrController: AsrController | undefined;
+  private _azureSpeechClient: AzureSpeechClient | undefined;
 
   private _wakewordController: WakewordController | undefined;
   private _startAsrHandler: any = this.startAsr.bind(this);
   private _stopAsrHandler: any = this.stopAsr.bind(this);
   private _asrEosIntervalTimeout: NodeJS.Timeout;
 
+  private _audioSourceWaveStreamer: AudioSourceWaveStreamer;
+  private _asrTimer: Timer;
+
   constructor(props: AsrProps) {
     super(props);
-    this._serviceCredentials = {
-      url: this.props.model.appSettings.authUrl,
-      username: this.props.model.appSettings.authUsername,
-      password: this.props.model.appSettings.authPassword,
-      scope: this.props.model.appSettings.authScope,
-    };
+    this._azureSpeechClient = new AzureSpeechClient(this.props.model.config.json);
     this.state = {
-      // settings: this.props.model.appSettings.json,
       message: 'Waiting...',
       asrResult: '',
       visualizerSource: undefined
@@ -88,49 +91,34 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
     if (this._wakewordController) this._wakewordController.dispose();
   }
 
-  parseAsrResults(results: any) {
+  parseAsrResults(results: any): any[] {
     let utterance: string = '';
-    let highestConfidence: number = 0;
-    const hypotheses: any[] = [];
-    if (results) {
-      results.forEach((result: any) => {
-        if (result.result && result.result.hypotheses) {
-          result.result.hypotheses.forEach((hypothesis: any) => {
-            const confidence: number = hypothesis.confidence || 0;
-            const avgConfidence: number = hypothesis.average_confidence || 0;
-            const conf = Math.max(confidence, avgConfidence);
-            console.log(conf, highestConfidence);
-            hypotheses.push({
-              text: hypothesis.formatted_text,
-              confidence: confidence,
-              avgConfidence: avgConfidence,
-              rejected: hypothesis.rejected
-            })
-            if (!hypothesis.rejected && hypothesis.formatted_text && (conf > highestConfidence)) {
-              highestConfidence = conf;
-              utterance = hypothesis.formatted_text;
-            }
-          });
-        }
-      });
+    let hyoptheses: any[] = [];
+    if (results && results.NBest) {
+      hyoptheses = results.NBest;
+      if (results.NBest[0]) {
+        utterance = results.NBest[0].Display;
+      }
     }
+
     this.setState({
       asrResult: utterance
     });
-    return hypotheses;
+    return hyoptheses;
   }
 
   messageFromResults(results: any): string {
+    const timeMessage: string = this._asrTimer ? `${this._asrTimer.name}: ${this._asrTimer.elapsedTime()} milliseconds` : '';
     const hypotheses = this.parseAsrResults(results);
     hypotheses.sort((a: AsrHypothesis, b: AsrHypothesis): number => {
-      const confA = Math.max(a.confidence, a.avgConfidence);
-      const confB = Math.max(b.confidence, b.avgConfidence);
+      const confA = a.Confidence;
+      const confB = b.Confidence;
       return confB - confA;
     });
-    let hypothesesText = '';
+    let hypothesesText = `${timeMessage}\n`;
     if (hypotheses) {
       hypotheses.forEach((hypothesis: AsrHypothesis) => {
-        let text: string = `${hypothesis.text}\t${hypothesis.confidence}\t${hypothesis.avgConfidence}\t${hypothesis.rejected}`;
+        let text: string = `Confidence: ${hypothesis.Confidence}\nDisplay: ${hypothesis.Display}\nLexical: ${hypothesis.Lexical}\nITN: ${hypothesis.ITN}\nMaskedITN: ${hypothesis.MaskedITN}`;
         hypothesesText += text + '\n';
       });
     }
@@ -145,8 +133,30 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
       monitorAudio: false,
       captureAudio: true,
     });
-    this._asrController = new AsrController(this._serviceCredentials, this._microphoneAudioSource);
-    this._asrController.start();
+    this._audioSourceWaveStreamer = new AudioSourceWaveStreamer(this._microphoneAudioSource);
+    // const writeStream = createWriteStream(PathUtils.resolve('out.wav'));
+    // this._audioSourceWaveStreamer.readStream.pipe(writeStream);
+    this._azureSpeechClient.recognizeStream(this._audioSourceWaveStreamer.readStream)
+      .then((results: any) => {
+        // console.log(results);
+        this.setState({
+          message: this.messageFromResults(results),
+          visualizerSource: undefined
+        }, () => {
+          if (this._microphoneAudioSource) this._microphoneAudioSource.dispose();
+          this._microphoneAudioSource = undefined;
+        });
+      })
+      .catch((error: any) => {
+        // console.log(error);
+        this.setState({
+          message: error,
+          visualizerSource: undefined
+        }, () => {
+          if (this._microphoneAudioSource) this._microphoneAudioSource.dispose();
+          this._microphoneAudioSource = undefined;
+        });
+      });
     this.setState({
       message: `recording: started:`,
       visualizerSource: this._microphoneAudioSource
@@ -161,35 +171,17 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
       clearInterval(this._asrEosIntervalTimeout);
       this._asrEosIntervalTimeout = undefined;
     }
+    this._asrTimer = new Timer('ASR Response Time');
+    if (this._audioSourceWaveStreamer) this._audioSourceWaveStreamer.dispose();
+    this._audioSourceWaveStreamer = undefined;
+
     EarconManager.Instance().playTone(EarconTone.LISTEN_STOP);
-    if (this._asrController && this._microphoneAudioSource) {
+    if (this._microphoneAudioSource) {
       if (this._microphoneAudioSource.audioData) {
         let audioData = this._microphoneAudioSource.audioData;
-        this.writeAudioData16ToFile(audioData);
+        AudioUtils.writeAudioData16ToFile(audioData, PathUtils.resolve('audio-pcm-16'));
       }
-      this._asrController.on('end', ((results: any) => {
-        this.setState({
-          message: this.messageFromResults(results),
-          visualizerSource: undefined
-        }, () => {
-          this._asrController.dispose();
-          this._asrController = undefined;
-          this._microphoneAudioSource.dispose();
-          this._microphoneAudioSource = undefined;
-        });
-
-      }));
-      this._asrController.stop();
     }
-  }
-
-  writeAudioData16ToFile(audioData: Int16Array) {
-    let audioFile = path.resolve(basepath, 'audio-pcm-16.raw');
-    fs.writeFileSync(audioFile, Buffer.from(audioData.buffer));
-    const wav: any = new WaveFile();
-    wav.fromScratch(1, 16000, '16', audioData);
-    let wavFile = path.resolve(basepath, 'audio-pcm-16.wav');
-    fs.writeFileSync(wavFile, wav.toBuffer());
   }
 
   onButtonClicked(action: string, event: any) {
@@ -214,14 +206,14 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
           const audioData: Int16Array = this._microphoneAudioSource.audioData;
           let bytesCaptured: number = 0;
           if (audioData) {
-            this.writeAudioData16ToFile(audioData);
+            AudioUtils.writeAudioData16ToFile(audioData, PathUtils.resolve('audio-pcm-16'));
           }
 
           this.setState({
             message: `recording: stopped:\nbytes captured: ${bytesCaptured}`,
             visualizerSource: undefined
           }, () => {
-            this._microphoneAudioSource.dispose();
+            if (this._microphoneAudioSource) this._microphoneAudioSource.dispose();
             this._microphoneAudioSource = undefined;
           });
         }
@@ -233,12 +225,12 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
         this.stopAsr();
         break;
       case 'btnWavStart':
-        let wavFilename = path.resolve(basepath, './notebooks/data/this_is_a_test.wav');
+        let wavFilename = '';
         dialog.showOpenDialog({
           properties: ['openFile']
         }, (files) => {
           if (files !== undefined) {
-            console.log(files);
+            // console.log(files);
             wavFilename = files[0];
           }
 
@@ -250,21 +242,35 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
               captureAudio: false,
             });
             this._waveFileAudioSource.on('done', () => {
-              this._asrController.on('end', ((results: string) => {
+              this._asrTimer = new Timer('ASR Response Time');
+            });
+            this._waveFileAudioSource.start();
+            this._audioSourceWaveStreamer = new AudioSourceWaveStreamer(this._waveFileAudioSource);
+            // const writeStream = createWriteStream('temp.wav');
+            // this._audioSourceWaveStreamer.readStream.pipe(writeStream);
+
+            // ALT: This is a faster, non-realtime way to stream the wave file to the server
+            // const readableStream = createReadStream(wavFilename);
+            // const passThrough = new PassThrough();
+            // readableStream.pipe(passThrough);
+            // passThrough.on('end', () => { console.log(`END`); this._asrTimer = new Timer('ASR Response Time'); })
+
+            this._azureSpeechClient.recognizeStream(this._audioSourceWaveStreamer.readStream) // (passThrough) // (this._audioSourceWaveStreamer.readStream) //
+              .then((results: any) => {
                 this.setState({
                   message: this.messageFromResults(results),
+                  visualizerSource: undefined
                 });
-                this._asrController.dispose();
-                this._asrController = undefined;
-              }));
-              this._asrController.stop();
-              this._waveFileAudioSource.dispose();
-              this._waveFileAudioSource = undefined;
-            })
-            this._asrController = new AsrController(this._serviceCredentials, this._waveFileAudioSource);
-            this._asrController.start();
+              })
+              .catch((error: any) => {
+                this.setState({
+                  message: error,
+                  visualizerSource: undefined
+                });
+              });
             this.setState({
-              message: `wav: upload started:`
+              message: `upload: started:`,
+              visualizerSource: this._waveFileAudioSource
             });
           } catch (error) {
             this.setState({
@@ -300,30 +306,30 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
             <input id='asrResult' type='text' className='form-control' placeholder='input' value={this.state.asrResult} readOnly />
           </div>
           <div className='Asr-row'>
-            <button id='btnRecordStart' type='button' className={`btn btn-primary App-button`}
-              onClick={(event) => this.onButtonClicked(`btnRecordStart`, event)}>
-              RecordStart
-          </button>
-            <button id='btnRecordStop' type='button' className={`btn btn-primary App-button`}
-              onClick={(event) => this.onButtonClicked(`btnRecordStop`, event)}>
-              RecordStop
-          </button>
             <button id='btnAsrStart' type='button' className={`btn btn-primary App-button`}
               onClick={(event) => this.onButtonClicked(`btnAsrStart`, event)}>
               AsrStart
-          </button>
+            </button>
             <button id='btnAsrStop' type='button' className={`btn btn-primary App-button`}
               onClick={(event) => this.onButtonClicked(`btnAsrStop`, event)}>
               AsrStop
-          </button>
+            </button>
+            <button id='btnRecordStart' type='button' className={`btn btn-primary App-button`}
+              onClick={(event) => this.onButtonClicked(`btnRecordStart`, event)}>
+              RecordStart
+            </button>
+            <button id='btnRecordStop' type='button' className={`btn btn-primary App-button`}
+              onClick={(event) => this.onButtonClicked(`btnRecordStop`, event)}>
+              RecordStop
+            </button>
             <button id='btnWavStart' type='button' className={`btn btn-primary App-button`}
               onClick={(event) => this.onButtonClicked(`btnWavStart`, event)}>
               WavStart
-          </button>
+            </button>
             <button id='btnWakeword' type='button' className={`btn btn-primary App-button`}
               onClick={(event) => this.onButtonClicked(`btnWakeword`, event)}>
               Wakeword
-          </button>
+            </button>
           </div>
           <div className='Asr-row'>
             <AudioWaveformVisualizer audioDataSource={this.state.visualizerSource} options={{ w: 256, h: 50, tickWidth: 1 }} />
