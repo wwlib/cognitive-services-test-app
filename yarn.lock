@@ -3130,9 +3130,9 @@ code-point-at@^1.0.0:
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
   integrity sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=
 
-cognitiveserviceslib@wwlib/cognitiveserviceslib#12518f7c6230129ff9550c182c02ab146f669632:
-  version "0.0.5"
-  resolved "https://codeload.github.com/wwlib/cognitiveserviceslib/tar.gz/12518f7c6230129ff9550c182c02ab146f669632"
+cognitiveserviceslib@wwlib/cognitiveserviceslib#v0.0.6:
+  version "0.0.6"
+  resolved "https://codeload.github.com/wwlib/cognitiveserviceslib/tar.gz/4a3a78cd22108ae33d0442a71c5df9d1ee7059c9"
   dependencies:
     axios "^0.18.1"
     form-data "^3.0.0"

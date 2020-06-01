@@ -12,13 +12,6 @@ import Asr from './components/Asr/Asr';
 import Nlu from './components/Nlu/Nlu';
 import Tts from './components/Tts/Tts';
 
-interface ServiceCredentials {
-  url: string;
-  username: string;
-  password: string;
-  scope: string;
-}
-
 let fs: any;
 let path: any;
 let app: any;
@@ -28,7 +21,10 @@ if (process.env.REACT_APP_MODE === 'electron') {
   app = require('electron').remote.app;
 }
 
-export interface AppProps { model: Model }
+export interface AppProps { 
+  model: Model
+}
+
 export interface AppState {
   settings: CognitiveServicesConfigOptions;
   activeTab: string;

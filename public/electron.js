@@ -63,7 +63,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({width: 1200, height: 780, webPreferences: { nodeIntegration: true }});
 
     // and load the index.html of the app.
-    console.log(__dirname);
+    // console.log(__dirname);
     // mainWindow.loadURL('http://localhost:3000');
     mainWindow.loadFile(path.join(__dirname, "../build/index.html"));
 

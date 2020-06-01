@@ -143,7 +143,7 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
           message: this.messageFromResults(results),
           visualizerSource: undefined
         }, () => {
-          this._microphoneAudioSource.dispose();
+          if (this._microphoneAudioSource) this._microphoneAudioSource.dispose();
           this._microphoneAudioSource = undefined;
         });
       })
@@ -153,7 +153,7 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
           message: error,
           visualizerSource: undefined
         }, () => {
-          this._microphoneAudioSource.dispose();
+          if (this._microphoneAudioSource) this._microphoneAudioSource.dispose();
           this._microphoneAudioSource = undefined;
         });
       });
@@ -213,7 +213,7 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
             message: `recording: stopped:\nbytes captured: ${bytesCaptured}`,
             visualizerSource: undefined
           }, () => {
-            this._microphoneAudioSource.dispose();
+            if (this._microphoneAudioSource) this._microphoneAudioSource.dispose();
             this._microphoneAudioSource = undefined;
           });
         }
