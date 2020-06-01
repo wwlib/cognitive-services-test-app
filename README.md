@@ -14,8 +14,6 @@ Azure services are implemented via the cognitiveserviceslib module (https://gith
 #### install & run
 ```
 yarn
-yarn rebuild (necessry to use grpc, see `electron & grpc` below)
-  - may happen automatically as a postinstall step
 yarn build
 yarn start
 ```
