@@ -6,7 +6,6 @@ Azure services are implemented via the cognitiveserviceslib module (https://gith
 
 ![cognitive-services-test-app](./docs/cognitive-services-test-app.png)
 
-
 #### prerequisites
 - install node (i.e. v8.12.0)
 - install yarn
@@ -17,8 +16,6 @@ yarn
 yarn build
 yarn start
 ```
-
-(Again, this is app is a shell. Actual service integration is not implemented.)
 
 #### raspberry pi notes
 cognitive-services-test-app runs nicely on a Raspberry Pi B 3+
