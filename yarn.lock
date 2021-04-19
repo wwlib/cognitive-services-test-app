@@ -6735,8 +6735,9 @@ micromatch@^3.1.10, micromatch@^3.1.4:
     snapdragon "^0.8.1"
     to-regex "^3.0.2"
 
-"midi-player-js@github:wwlib/midiplayerjs":
+midi-player-js@wwlib/midiplayerjs:
   version "1.1.0"
+  uid "00c6f411dc44e10a1499d5b0cd2d38e2db877d0c"
   resolved "https://codeload.github.com/wwlib/midiplayerjs/tar.gz/00c6f411dc44e10a1499d5b0cd2d38e2db877d0c"
 
 midimessage@^1.0.5:
@@ -9609,8 +9610,8 @@ sshpk@^1.7.0:
     tweetnacl "~0.14.0"
 
 ssri@^6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/ssri/-/ssri-6.0.1.tgz#2a3c41b28dd45b62b63676ecb74001265ae9edd8"
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/ssri/-/ssri-6.0.2.tgz#157939134f20464e7301ddba3e90ffa8f7728ac5"
   dependencies:
     figgy-pudding "^3.5.1"
 
