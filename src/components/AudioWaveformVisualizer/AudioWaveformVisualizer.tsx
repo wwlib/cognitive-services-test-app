@@ -11,7 +11,7 @@ export interface AudioWaveformVisualizerOptions {
 
 export interface AudioWaveformVisualizerProps {
   options?: AudioWaveformVisualizerOptions;
-  audioDataSource: AudioSource | AudioSink;
+  audioDataSource: AudioSource | AudioSink | undefined;
 }
 
 export interface AudioWaveformVisualizerState {

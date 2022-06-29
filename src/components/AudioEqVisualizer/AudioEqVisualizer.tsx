@@ -11,7 +11,7 @@ export interface AudioWaveformVisualizerOptions {
 
 export interface AudioWaveformVisualizerProps {
   options?: AudioWaveformVisualizerOptions;
-  audioDataSource: AudioSource | AudioSink;
+  audioDataSource: AudioSource | AudioSink | undefined;
 }
 
 export interface AudioWaveformVisualizerState {
@@ -95,7 +95,7 @@ export default class AudioEqVisualizer extends React.Component<AudioWaveformVisu
     // console.log(`onButtonClicked: ${action}`);
     event.preventDefault();
 
-    switch(action) {
+    switch (action) {
       case 'btnClear':
         this.clearCanvas();
         break;
@@ -123,37 +123,39 @@ export default class AudioEqVisualizer extends React.Component<AudioWaveformVisu
         this._resetNeeded = false;
       }
       let max_data_value = 0;
-      this._vizualizerContext.fillStyle = '#1A6B96';
-      this._vizualizerContext.clearRect(0, 0, this._vizOptions.w, this._vizOptions.h);
-      if (this.props.audioDataSource) {
-        const data = new Uint8Array(this.props.audioDataSource.analyzerSamples);
-        this.props.audioDataSource.analyzer.getByteFrequencyData(data);
+      if (this._vizualizerContext) {
+        this._vizualizerContext.fillStyle = '#1A6B96';
+        this._vizualizerContext.clearRect(0, 0, this._vizOptions.w, this._vizOptions.h);
+        if (this.props.audioDataSource) {
+          const data = new Uint8Array(this.props.audioDataSource.analyzerSamples);
+          this.props.audioDataSource.analyzer.getByteFrequencyData(data);
 
-        this._vizualizerContext.fillStyle = '#00b6f0';
+          this._vizualizerContext.fillStyle = '#00b6f0';
 
-        const length = data.length / 2;
-        const bar_width = Math.floor((this._vizOptions.w / length) / 3);
-        const mid_point = Math.floor(this._vizOptions.w / 2);
-        for (var i = 0; i < length; i++) {
-          const value = data[i];
-          let top = this._vizOptions.h - Math.floor((this._vizOptions.h * (value * 1.0) / 256.0));
-          const left1 = mid_point + i * bar_width;
-          const left2 = mid_point - i * bar_width;
-          const width = bar_width - 1;
-          const height = this._vizOptions.h - top;
+          const length = data.length / 2;
+          const bar_width = Math.floor((this._vizOptions.w / length) / 3);
+          const mid_point = Math.floor(this._vizOptions.w / 2);
+          for (var i = 0; i < length; i++) {
+            const value = data[i];
+            let top = this._vizOptions.h - Math.floor((this._vizOptions.h * (value * 1.0) / 256.0));
+            const left1 = mid_point + i * bar_width;
+            const left2 = mid_point - i * bar_width;
+            const width = bar_width - 1;
+            const height = this._vizOptions.h - top;
 
-          top = Math.floor(top / 2);
+            top = Math.floor(top / 2);
 
-          max_data_value = Math.max(max_data_value, value);
+            max_data_value = Math.max(max_data_value, value);
 
-          if (this._colorsOn) {
-            const div = data.length / this._colors.length;
-            const colorIndex = Math.floor(i / div);
-            this._vizualizerContext.fillStyle = this._colors[colorIndex];
+            if (this._colorsOn) {
+              const div = data.length / this._colors.length;
+              const colorIndex = Math.floor(i / div);
+              this._vizualizerContext.fillStyle = this._colors[colorIndex];
+            }
+            this._vizualizerContext.fillRect(left1, top, bar_width - 1, height);
+            this._vizualizerContext.fillRect(left2, top, bar_width - 1, height);
+            this._canvasIsCleared = false;
           }
-          this._vizualizerContext.fillRect(left1, top, bar_width - 1, height);
-          this._vizualizerContext.fillRect(left2, top, bar_width - 1, height);
-          this._canvasIsCleared = false;
         }
       }
     });

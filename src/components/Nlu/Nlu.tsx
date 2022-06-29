@@ -22,14 +22,14 @@ export default class Nlu extends React.Component<NluProps, NluState> {
 
   private _log: Log;
 
-  private _nluController: LUISController | undefined;
+  private _nluController: LUISController;
 
   private _onChangeHandler: any = (event: any) => this.onChangeHandler(event);
   private _onBlurHandler: any = (event: any) => this.onBlurHandler(event);
 
   constructor(props: NluProps) {
     super(props);
-    this._nluController = new LUISController(this.props.model.config.json);
+    this._nluController = new LUISController(this.props.model.settings.json);
     this.state = {
       // settings: this.props.model.config.json,
       nluInput: '',
@@ -50,7 +50,7 @@ export default class Nlu extends React.Component<NluProps, NluState> {
           timeStart: new Date().getTime(),
         }
         const token = this._nluController.getIntentAndEntities(this.state.nluInput);
-        token.complete
+        if (token.complete) token.complete
           .then((intentAndEntities) => {
             timeLog.complete = new Date().getTime();
             timeLog.cloudLatency = timeLog.complete - timeLog.timeStart;

@@ -1,5 +1,6 @@
 import * as React from "react";
-import { CognitiveServicesConfigOptions } from 'cognitiveserviceslib';
+// import { CognitiveServicesConfigOptions } from 'cognitiveserviceslib';
+import { AppSettingsOptions } from '../../model/AppSettings'
 
 import './Settings.css';
 import Model from '../../model/Model';
@@ -7,7 +8,7 @@ import Log from '../../utils/Log';
 import parentLog from '../../log';
 import FileDrop from '../FileDrop/FileDrop';
 
-export interface SettingsProps { model: Model, settings: CognitiveServicesConfigOptions, changed: any, fileHandler: any }
+export interface SettingsProps { model: Model, settings: AppSettingsOptions, changed: any, fileHandler: any }
 export interface SettingsState {
   AzureSpeechSubscriptionKey: string;
   AzureSpeechTokenEndpoint: string;
@@ -16,6 +17,10 @@ export interface SettingsState {
   LuisEndpoint: string;
   LuisAppId: string;
   LuisSubscriptionKey: string;
+  CognitiveHubServiceUrl: string;
+  CognitiveHubAuthUrl: string;
+  CognitiveHubUsername: string;
+  CognitiveHubPassword: string;
 }
 
 export default class Settings extends React.Component<SettingsProps, SettingsState> {
@@ -39,6 +44,10 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
       LuisEndpoint: this.props.settings.Microsoft.LuisEndpoint,
       LuisAppId: this.props.settings.Microsoft.LuisAppId,
       LuisSubscriptionKey: this.props.settings.Microsoft.LuisSubscriptionKey,
+      CognitiveHubServiceUrl: this.props.settings.CognitiveHub.serviceUrl,
+      CognitiveHubAuthUrl: this.props.settings.CognitiveHub.authUrl,
+      CognitiveHubUsername: this.props.settings.CognitiveHub.username,
+      CognitiveHubPassword: this.props.settings.CognitiveHub.password,
     }
   }
 
@@ -60,6 +69,10 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
         LuisEndpoint: nextProps.settings.Microsoft.LuisEndpoint,
         LuisAppId: nextProps.settings.Microsoft.LuisAppId,
         LuisSubscriptionKey: nextProps.settings.Microsoft.LuisSubscriptionKey,
+        CognitiveHubServiceUrl: nextProps.settings.CognitiveHub.serviceUrl,
+        CognitiveHubAuthUrl: nextProps.settings.CognitiveHub.authUrl,
+        CognitiveHubUsername: nextProps.settings.CognitiveHub.username,
+        CognitiveHubPassword: nextProps.settings.CognitiveHub.password,
       })
     }
   }
@@ -101,6 +114,18 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
       case 'LuisSubscriptionKey':
         updateObj = { LuisSubscriptionKey: nativeEvent.target.value };
         break;
+      case 'CognitiveHubServiceUrl':
+        updateObj = { CognitiveHubServiceUrl: nativeEvent.target.value };
+        break;
+      case 'CognitiveHubAuthUrl':
+        updateObj = { CognitiveHubAuthUrl: nativeEvent.target.value };
+        break;
+      case 'CognitiveHubUsername':
+        updateObj = { CognitiveHubUsername: nativeEvent.target.value };
+        break;
+      case 'CognitiveHubPassword':
+        updateObj = { CognitiveHubPassword: nativeEvent.target.value };
+        break;
     }
 
     if (updateObj) {
@@ -109,7 +134,23 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
   }
 
   onBlurHandler(event: any) {
-    this.props.changed({ Microsoft: this.state });
+    this.props.changed({
+      Microsoft: {
+        AzureSpeechSubscriptionKey: this.state.AzureSpeechSubscriptionKey,
+        AzureSpeechTokenEndpoint: this.state.AzureSpeechTokenEndpoint,
+        AzureSpeechEndpointAsr: this.state.AzureSpeechEndpointAsr,
+        AzureSpeechEndpointTts: this.state.AzureSpeechEndpointTts,
+        LuisEndpoint: this.state.LuisEndpoint,
+        LuisAppId: this.state.LuisAppId,
+        LuisSubscriptionKey: this.state.LuisSubscriptionKey,
+      },
+      CognitiveHub: {
+        serviceUrl: this.state.CognitiveHubServiceUrl,
+        authUrl: this.state.CognitiveHubAuthUrl,
+        username: this.state.CognitiveHubUsername,
+        password: this.state.CognitiveHubPassword,
+      }
+    });
   }
 
   onCheckboxHandler(event: any) {
@@ -154,41 +195,57 @@ export default class Settings extends React.Component<SettingsProps, SettingsSta
         <FileDrop className='FileDrop' targetClassName='FileDropTarget'
           onDrop={(fileList: any, event: any) => this.handleFileDrop(fileList, event)}
           onDragOver={(event: any) => this.handleDragOver(event)}>
-          
-            
-              <div className='SettingsGroup'>
-                <div className="SettingsItem">
-                  <label htmlFor="AzureSpeechSubscriptionKey" className="col-form-label">AzureSpeechSubscriptionKey</label>
-                  <input id="AzureSpeechSubscriptionKey" type="password" className="form-control" placeholder="" value={this.state.AzureSpeechSubscriptionKey} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
-                </div>
-                <div className="SettingsItem">
-                  <label htmlFor="AzureSpeechTokenEndpoint" className="col-form-label">AzureSpeechTokenEndpoint</label>
-                  <input id="AzureSpeechTokenEndpoint" type="text" className="form-control" placeholder="" value={this.state.AzureSpeechTokenEndpoint} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
-                </div>
-                <div className="SettingsItem">
-                  <label htmlFor="AzureSpeechEndpointAsr" className="col-form-label">AzureSpeechEndpointAsr</label>
-                  <input id="AzureSpeechEndpointAsr" type="text" className="form-control" placeholder="" value={this.state.AzureSpeechEndpointAsr} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
-                </div>
-                <div className="SettingsItem">
-                  <label htmlFor="AzureSpeechEndpointTts" className="col-form-label">AzureSpeechEndpointTts</label>
-                  <input id="AzureSpeechEndpointTts" type="text" className="form-control" placeholder="" value={this.state.AzureSpeechEndpointTts} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
-                </div>
 
-                <div className="SettingsItem">
-                  <label htmlFor="LuisEndpoint" className="col-form-label">LuisEndpoint</label>
-                  <input id="LuisEndpoint" type="text" className="form-control" placeholder="" value={this.state.LuisEndpoint} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
-                </div>
-                <div className="SettingsItem">
-                  <label htmlFor="LuisAppId" className="col-form-label">LuisAppId</label>
-                  <input id="LuisAppId" type="password" className="form-control" placeholder="" value={this.state.LuisAppId} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
-                </div>
-                <div className="SettingsItem">
-                  <label htmlFor="LuisSubscriptionKey" className="col-form-label">LuisSubscriptionKey</label>
-                  <input id="LuisSubscriptionKey" type="password" className="form-control" placeholder="" value={this.state.LuisSubscriptionKey} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
-                </div>
-              </div>
-            
-          
+
+          <div className='SettingsGroup'>
+            <div className="SettingsItem">
+              <label htmlFor="AzureSpeechSubscriptionKey" className="col-form-label">AzureSpeechSubscriptionKey</label>
+              <input id="AzureSpeechSubscriptionKey" type="password" className="form-control" placeholder="" value={this.state.AzureSpeechSubscriptionKey} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="AzureSpeechTokenEndpoint" className="col-form-label">AzureSpeechTokenEndpoint</label>
+              <input id="AzureSpeechTokenEndpoint" type="text" className="form-control" placeholder="" value={this.state.AzureSpeechTokenEndpoint} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="AzureSpeechEndpointAsr" className="col-form-label">AzureSpeechEndpointAsr</label>
+              <input id="AzureSpeechEndpointAsr" type="text" className="form-control" placeholder="" value={this.state.AzureSpeechEndpointAsr} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="AzureSpeechEndpointTts" className="col-form-label">AzureSpeechEndpointTts</label>
+              <input id="AzureSpeechEndpointTts" type="text" className="form-control" placeholder="" value={this.state.AzureSpeechEndpointTts} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+
+            <div className="SettingsItem">
+              <label htmlFor="LuisEndpoint" className="col-form-label">LuisEndpoint</label>
+              <input id="LuisEndpoint" type="text" className="form-control" placeholder="" value={this.state.LuisEndpoint} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="LuisAppId" className="col-form-label">LuisAppId</label>
+              <input id="LuisAppId" type="password" className="form-control" placeholder="" value={this.state.LuisAppId} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="LuisSubscriptionKey" className="col-form-label">LuisSubscriptionKey</label>
+              <input id="LuisSubscriptionKey" type="password" className="form-control" placeholder="" value={this.state.LuisSubscriptionKey} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="CognitiveHubServiceUrl" className="col-form-label">CognitiveHubServiceUrl</label>
+              <input id="CognitiveHubServiceUrl" type="text" className="form-control" placeholder="" value={this.state.CognitiveHubServiceUrl} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="CognitiveHubAuthUrl" className="col-form-label">CognitiveHubAuthUrl</label>
+              <input id="CognitiveHubAuthUrl" type="text" className="form-control" placeholder="" value={this.state.CognitiveHubAuthUrl} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="CognitiveHubUsername" className="col-form-label">CognitiveHubUsername</label>
+              <input id="CognitiveHubUsername" type="text" className="form-control" placeholder="" value={this.state.CognitiveHubUsername} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+            <div className="SettingsItem">
+              <label htmlFor="CognitiveHubPassword" className="col-form-label">CognitiveHubPassword</label>
+              <input id="CognitiveHubPassword" type="password" className="form-control" placeholder="" value={this.state.CognitiveHubPassword} onChange={this._onChangeHandler} onBlur={this._onBlurHandler} />
+            </div>
+          </div>
+
+
         </FileDrop>
       </div>
     );

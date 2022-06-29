@@ -41,7 +41,7 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
 
   private _log: Log;
 
-  private _azureSpeechClient: AzureSpeechClient | undefined;
+  private _azureSpeechClient: AzureSpeechClient;
   private _audioContextAudioSink: AudioContextAudioSink | undefined;
 
   private _onChangeHandler: any = (event: any) => this.onChangeHandler(event);
@@ -49,7 +49,7 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
 
   constructor(props: TtsProps) {
     super(props);
-    this._azureSpeechClient = new AzureSpeechClient(this.props.model.config.json);
+    this._azureSpeechClient = new AzureSpeechClient(this.props.model.settings.json);
     this.state = {
       ttsInput: '',
       message: 'Waiting...',
@@ -71,14 +71,16 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
           sampleRate: 16000
         });
         this._audioContextAudioSink.on('ended', () => {
-          let audioData: Int16Array = this._audioContextAudioSink.int16Data
-          AudioUtils.writeAudioData16ToFile(audioData, PathUtils.resolve('audio_tts'));
-          this._audioContextAudioSink.dispose();
-          this._audioContextAudioSink = undefined;
-          this.setState({
-            message: `tts: ended`,
-            visualizerSource: undefined
-          });
+          let audioData: Int16Array | undefined = this._audioContextAudioSink ? this._audioContextAudioSink.int16Data : undefined;
+          if (audioData && this._audioContextAudioSink) {
+            AudioUtils.writeAudioData16ToFile(audioData, PathUtils.resolve('audio_tts'));
+            this._audioContextAudioSink.dispose();
+            this._audioContextAudioSink = undefined;
+            this.setState({
+              message: `tts: ended`,
+              visualizerSource: undefined
+            });
+          }
         });
         this._azureSpeechClient.synthesizeStream(this.state.ttsInput)
           .then((audioStream: NodeJS.ReadableStream) => {
@@ -87,11 +89,11 @@ export default class Tts extends React.Component<TtsProps, TtsState> {
             // audioStream.pipe(file);
             audioStream.on('data', (data: any) => {
               console.log(`data:`, data);
-              this._audioContextAudioSink.writeAudio(data);
+              if (this._audioContextAudioSink) this._audioContextAudioSink.writeAudio(data);
             });
             audioStream.on('end', () => {
               console.log(`Tts: synthesizeStream: end`);
-              this._audioContextAudioSink.play();
+              if (this._audioContextAudioSink) this._audioContextAudioSink.play();
               this.setState({
                 message: `tts: playing:`,
                 visualizerSource: this._audioContextAudioSink

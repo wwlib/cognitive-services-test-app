@@ -1,16 +1,19 @@
 import React, { Component } from 'react';
-import { AudioSource, AudioSink, CognitiveServicesConfigOptions } from 'cognitiveserviceslib';
+import { AudioSource, AudioSink } from 'cognitiveserviceslib';
 
 import './App.css';
 import Logo from './components/Logo/Logo';
+import { AppSettingsOptions } from './model/AppSettings';
 import Model from './model/Model';
 import Log from './utils/Log';
 
 //panel components
 import Settings from './components/Settings/Settings';
 import Asr from './components/Asr/Asr';
+import AsrStreaming from './components/AsrStreaming/AsrStreaming';
 import Nlu from './components/Nlu/Nlu';
 import Tts from './components/Tts/Tts';
+import CognitiveHub from './components/CognitiveHub/CognitiveHub';
 
 let fs: any;
 let path: any;
@@ -21,12 +24,12 @@ if (process.env.REACT_APP_MODE === 'electron') {
   app = require('electron').remote.app;
 }
 
-export interface AppProps { 
+export interface AppProps {
   model: Model
 }
 
 export interface AppState {
-  settings: CognitiveServicesConfigOptions;
+  settings: AppSettingsOptions;
   activeTab: string;
   message: string;
   visualizerSource: AudioSource | AudioSink | undefined;
@@ -40,7 +43,7 @@ export default class App extends React.Component<AppProps, AppState> {
     super(props);
     this.state = {
       activeTab: 'Settings',
-      settings: this.props.model.config.json,
+      settings: this.props.model.settings.json,
       message: 'Waiting...',
       visualizerSource: undefined
     };
@@ -58,11 +61,17 @@ export default class App extends React.Component<AppProps, AppState> {
       case 'tabAsr':
         this.setState({ activeTab: 'Asr' });
         break;
+      case 'tabAsrStreaming':
+        this.setState({ activeTab: 'AsrStreaming' });
+        break;
       case 'tabNlu':
         this.setState({ activeTab: 'Nlu' });
         break;
       case 'tabTts':
         this.setState({ activeTab: 'Tts' });
+        break;
+      case 'tabCognitiveHub':
+        this.setState({ activeTab: 'CognitiveHub' });
         break;
       case 'tabDialog':
         this.setState({ activeTab: 'Dialog' });
@@ -70,10 +79,10 @@ export default class App extends React.Component<AppProps, AppState> {
     }
   }
 
-  onSettingsChanged(settings: CognitiveServicesConfigOptions) {
-    this.props.model.setAppParams(settings);
+  onSettingsChanged(settings: AppSettingsOptions) {
+    this.props.model.setAppSettings(settings);
     this.setState({
-      settings: this.props.model.config.json
+      settings: this.props.model.settings.json
     })
   }
 
@@ -124,13 +133,19 @@ export default class App extends React.Component<AppProps, AppState> {
           <Settings
             model={this.props.model}
             settings={this.state.settings}
-            changed={(settings: CognitiveServicesConfigOptions) => { this.onSettingsChanged(settings) }}
+            changed={(settings: AppSettingsOptions) => { this.onSettingsChanged(settings) }}
             fileHandler={(fileList: any[]) => this.handleUploadFileList(fileList)}
           />
         break;
       case 'Asr':
         activeTab =
           <Asr
+            model={this.props.model}
+          />
+        break;
+      case 'AsrStreaming':
+        activeTab =
+          <AsrStreaming
             model={this.props.model}
           />
         break;
@@ -143,6 +158,12 @@ export default class App extends React.Component<AppProps, AppState> {
       case 'Tts':
         activeTab =
           <Tts
+            model={this.props.model}
+          />
+        break;
+      case 'CognitiveHub':
+        activeTab =
+          <CognitiveHub
             model={this.props.model}
           />
         break;
@@ -167,19 +188,27 @@ export default class App extends React.Component<AppProps, AppState> {
             <button id='btn_settings' type='button' className={this.getButtonStyle('Settings')}
               onClick={(event) => this.onTabButtonClicked(`tabSettings`, event)}>
               Settings
-                </button>
+            </button>
             <button id='btn_asr' type='button' className={this.getButtonStyle('Asr')}
               onClick={(event) => this.onTabButtonClicked(`tabAsr`, event)}>
-              Asr
-                </button>
+              AsrHTTP
+            </button>
+            <button id='btn_asr' type='button' className={this.getButtonStyle('AsrStreaming')}
+              onClick={(event) => this.onTabButtonClicked(`tabAsrStreaming`, event)}>
+              AsrStreaming
+            </button>
             <button id='btn_nlu' type='button' className={this.getButtonStyle('Nlu')}
               onClick={(event) => this.onTabButtonClicked(`tabNlu`, event)}>
               Nlu
-                </button>
+            </button>
             <button id='btn_tts' type='button' className={this.getButtonStyle('Tts')}
               onClick={(event) => this.onTabButtonClicked(`tabTts`, event)}>
               Tts
-                </button>
+            </button>
+            <button id='btn_tts' type='button' className={this.getButtonStyle('CognitiveHub')}
+              onClick={(event) => this.onTabButtonClicked(`tabCognitiveHub`, event)}>
+              CognitiveHub (Robokit)
+            </button>
           </div>
         </header>
         <div className='Tabs'>

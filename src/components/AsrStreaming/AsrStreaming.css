@@ -1,0 +1,45 @@
+.Asr {
+  background-color: #282c34;
+  /* text-align: center; */
+  color: white;
+}
+
+.Asr textarea {
+  width: 500px;
+  margin: auto;
+  padding: 8px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.Asr #asrResult {
+  margin: auto;
+  width: 500px;
+}
+
+.Asr-controls {
+
+}
+
+.Asr-row {
+  margin-top: 6px;
+}
+
+.Asr-body {
+  background-color: #282c34;
+}
+
+.Asr-link {
+  color: #61dafb;
+}
+
+.Asr-button {
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: 6px;
+}
+
+.Tabs {
+  padding: 6px;
+}
