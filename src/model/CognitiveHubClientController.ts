@@ -172,9 +172,13 @@ export default class CognitiveHubClientController extends EventEmitter {
 
     disconnect() {
         this._connected = false;
-        this._timesync.destroy();
+        if (this._timesync) {
+            this._timesync.destroy();
+        }
         this._timesync = undefined;
-        this._socket.close();
+        if (this._socket) {
+            this._socket.close();
+        }
         this._socket = undefined;
     }
 }
