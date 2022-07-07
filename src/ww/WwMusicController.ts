@@ -34,7 +34,7 @@ export default class WwMusicController {
     playMidiNote(note: number = 48, channel: number = 3, volume: number = 127) {
         // var intervalId = window.setInterval(function(){
             console.log(`Playing note: ${note} chan: ${channel} vol: ${volume}`);
-            InstrumentManager.instance.playMidiNoteWithChannel(note, 127, 3);
+            InstrumentManager.instance.playMidiNoteWithChannel(note, volume, channel);
         // }, 1000);
         // InstrumentManager.instance.testPieAno();
     }

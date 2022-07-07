@@ -9,7 +9,8 @@ export default class Model {
 
   public log: Log;
   public settings: AppSettings;
-  public cognitiveHubClientController: CognitiveHubClientController | undefined;
+
+  private _cognitiveHubClientController: CognitiveHubClientController | undefined;
 
   constructor() {
     this.log = parentLog.createChild('Model');
@@ -25,13 +26,19 @@ export default class Model {
 
   //// CognitiveHub
 
-  getCognitiveHubClientController(): CognitiveHubClientController | undefined {
-    if (this.cognitiveHubClientController) {
-      return this.cognitiveHubClientController;
+  getCognitiveHubClientController(reset: boolean = false): CognitiveHubClientController | undefined {
+    if (reset) {
+      if (this._cognitiveHubClientController) {
+        this._cognitiveHubClientController.disconnect()
+        this._cognitiveHubClientController = undefined
+      }
+    }
+    if (this._cognitiveHubClientController) {
+      return this._cognitiveHubClientController;
     } else {
       if (this.settings.CognitiveHub.authUrl && this.settings.CognitiveHub.username && this.settings.CognitiveHub.password) {
-        this.cognitiveHubClientController = new CognitiveHubClientController(this.settings.CognitiveHub.serviceUrl, this.settings.CognitiveHub.authUrl, this.settings.CognitiveHub.username, this.settings.CognitiveHub.password);
-        return this.cognitiveHubClientController;
+        this._cognitiveHubClientController = new CognitiveHubClientController(this.settings.CognitiveHub.serviceUrl, this.settings.CognitiveHub.authUrl, this.settings.CognitiveHub.username, this.settings.CognitiveHub.password);
+        return this._cognitiveHubClientController;
       } else {
         return undefined
       }

@@ -1,4 +1,6 @@
 import { EventEmitter } from "events";
+import { CommandProcessor, RCSCommand, RCSCommandAck, SynchronizedClock, TimeData } from 'robokit-command-system';
+import ExampleCommandExecutor from "./ExampleCommandExecutor";
 
 const axios = require('axios');
 const { io } = require("socket.io-client");
@@ -7,7 +9,7 @@ const timesync = require('timesync');
 
 export interface CognitiveHubLoginResponse {
     access_token: string;
-    user_id: string;
+    account_id: string;
     refresh_token: string;
 }
 
@@ -15,23 +17,31 @@ export default class CognitiveHubClientController extends EventEmitter {
 
     private _serviceUrl: string;
     private _authUrl: string;
-    private _username: string;
+    private _accountId: string;
     private _password: string;
     private _accessToken: string | undefined;
-    private _userId: string | undefined;
     private _refreshToken: string | undefined;
 
     private _socket: any;
     private _timesync: any;
     private _connected: boolean;
 
-    constructor(serviceUrl: string, authUrl: string, username: string, password: string) {
+    private _syncOffset: number
+    private _commandExecutor: ExampleCommandExecutor;
+    private _synchronizedClock: SynchronizedClock | undefined;
+
+    constructor(serviceUrl: string, authUrl: string, accountId: string, password: string) {
         super();
         this._serviceUrl = serviceUrl;
         this._authUrl = authUrl;
-        this._username = username;
+        this._accountId = accountId;
         this._password = password;
         this._connected = false;
+        this._commandExecutor = new ExampleCommandExecutor();
+        this._syncOffset = 0;
+        this._synchronizedClock = new SynchronizedClock;
+        this._synchronizedClock.on('1sec', this.onSynchronizedClockUpdate)
+        this._synchronizedClock.startUpdate()
     }
 
     get connected(): boolean {
@@ -39,23 +49,22 @@ export default class CognitiveHubClientController extends EventEmitter {
     }
 
     async login(): Promise<CognitiveHubLoginResponse> {
-        console.log('CognitiveHubClientController: login', this._authUrl, this._username, this._password);
+        console.log('CognitiveHubClientController: login', this._authUrl, this._accountId, this._password);
         return new Promise((resolve, reject) => {
-            if (this._authUrl && this._username && this._password) {
+            if (this._authUrl && this._accountId && this._password) {
                 this._accessToken = '';
-                this._userId = '';
                 this._refreshToken = '';
                 axios.post(this._authUrl, {
-                    username: this._username,
+                    accountId: this._accountId,
                     password: this._password
                 },
                     {
                         headers: { 'Content-Type': 'application/json' }
                     })
                     .then((response: any) => {
-                        // console.log(response);
+                        console.log(response.data);
                         this._accessToken = response.data.access_token;
-                        this._userId = response.data.user_id;
+                        // this._accountId = response.data.account_id;
                         this._refreshToken = response.data.refresh_token;
                         resolve(response.data);
                     })
@@ -65,7 +74,7 @@ export default class CognitiveHubClientController extends EventEmitter {
                     });
 
             } else {
-                reject('Invalid authUrl, username and/or password.')
+                reject('Invalid authUrl, accountId and/or password.')
             }
         });
     }
@@ -92,7 +101,7 @@ export default class CognitiveHubClientController extends EventEmitter {
         if (loginResponse && loginResponse.access_token && this._serviceUrl) {
 
             this._socket = io(this._serviceUrl, {
-                path: '/socket-io/',
+                path: '/socket-device/',
                 extraHeaders: {
                     Authorization: `Bearer ${loginResponse.access_token}`,
                 },
@@ -112,6 +121,22 @@ export default class CognitiveHubClientController extends EventEmitter {
 
             this._timesync.on('change', (offset: number) => {
                 console.log('timesync: changed offset: ' + offset + ' ms');
+                this._syncOffset = offset
+                if (this._synchronizedClock) {
+                    this._synchronizedClock.onSyncOffsetChanged(offset)
+                }
+                if (this._commandExecutor) {
+                    this._commandExecutor.syncOffset = offset
+                }
+                const command = {
+                    id: 'tbd',
+                    type: 'sync',
+                    name: 'syncOffset',
+                    payload: {
+                        syncOffset: offset,
+                    }
+                }
+                this._socket.emit('command', command)
             });
 
             this._timesync.send = function (socket: any, data: any, timeout: number): Promise<void> {
@@ -143,8 +168,19 @@ export default class CognitiveHubClientController extends EventEmitter {
             });
 
             this._socket.on('disconnect', () => {
-                this._connected = true;
+                this._connected = false;
                 console.log(`on disconnect. closing...`);
+            });
+
+            CommandProcessor.getInstance().setCommandExecutor(this._commandExecutor)
+            CommandProcessor.getInstance().on('commandCompleted', (commandAck: RCSCommandAck) => {
+                console.log(`command completed:`, commandAck)
+                this._socket.emit('command', commandAck)
+            })
+
+            this._socket.on('command', function (command: RCSCommand) {
+                console.log('command', command);
+                CommandProcessor.getInstance().processCommand(command)
             });
 
             this._socket.on('message', function (data: any) {
@@ -170,6 +206,10 @@ export default class CognitiveHubClientController extends EventEmitter {
         }
     }
 
+    onSynchronizedClockUpdate = (timeData: TimeData) => {
+        this.emit('clockUpdate', timeData)
+    }
+
     disconnect() {
         this._connected = false;
         if (this._timesync) {
@@ -180,5 +220,10 @@ export default class CognitiveHubClientController extends EventEmitter {
             this._socket.close();
         }
         this._socket = undefined;
+        if (this._synchronizedClock) {
+            this._synchronizedClock.dispose()
+            this._synchronizedClock = undefined
+        }
+        this.removeAllListeners()
     }
 }

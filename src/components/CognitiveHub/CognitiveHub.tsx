@@ -17,6 +17,7 @@ import EarconManager, { EarconTone } from '../../audio/EarconManager';
 import PathUtils from '../../utils/PathUtils';
 // import Timer from '../../utils/Timer';
 import CognitiveHubClientController from '../../model/CognitiveHubClientController'
+import { TimeData } from 'robokit-command-system';
 
 let fs: any;
 // let path: any;
@@ -28,11 +29,12 @@ if (process.env.REACT_APP_MODE === 'electron') {
   dialog = require('electron').remote.dialog;
 }
 
-export interface AsrProps { model: Model }
-export interface AsrState {
+export interface CognitiveHubProps { model: Model }
+export interface CognitiveHubState {
   message: string;
   asrResult: string;
   visualizerSource: AudioSource | AudioSink | undefined;
+  synchronizedTimeString: string
 }
 
 export interface AsrHypothesis {
@@ -50,7 +52,7 @@ export interface AsrResults {
   RecognitionStatus: string;
 }
 
-export default class CognitiveHub extends React.Component<AsrProps, AsrState> {
+export default class CognitiveHub extends React.Component<CognitiveHubProps, CognitiveHubState> {
 
   private _microphoneAudioSource: MicrophoneAudioSource | undefined;
   private _waveFileAudioSource: WaveFileAudioSource | undefined;
@@ -60,21 +62,23 @@ export default class CognitiveHub extends React.Component<AsrProps, AsrState> {
   // private _asrTimer: Timer;
   private _cognitiveHubClient: CognitiveHubClientController | undefined;
 
-  constructor(props: AsrProps) {
+  constructor(props: CognitiveHubProps) {
     super(props);
     this.state = {
       message: 'Waiting...',
       asrResult: '',
-      visualizerSource: undefined
+      visualizerSource: undefined,
+      synchronizedTimeString: 'TBD',
     };
   }
 
   componentDidMount() {
     this._wakewordController = new WakewordController();
-    this._cognitiveHubClient = this.props.model.getCognitiveHubClientController();
+    this._cognitiveHubClient = this.props.model.getCognitiveHubClientController(true);
     if (this._cognitiveHubClient) {
       this._cognitiveHubClient.connect();
       this._cognitiveHubClient.on('asrEnded', this.onAsrEnded);
+      this._cognitiveHubClient.on('clockUpdate', this.onClockUpdate);
     }
   }
 
@@ -85,6 +89,13 @@ export default class CognitiveHub extends React.Component<AsrProps, AsrState> {
       this._cognitiveHubClient.off('asrEnded', this.onAsrEnded);
     }
     this._cognitiveHubClient = undefined;
+  }
+
+  onClockUpdate = (timeData: TimeData) => {
+    console.log(timeData)
+    this.setState({
+      synchronizedTimeString: timeData.simpleFormat,
+    })
   }
 
   // parseAsrResults(results: any): any[] {
@@ -162,7 +173,7 @@ export default class CognitiveHub extends React.Component<AsrProps, AsrState> {
       //   this._asrEosIntervalTimeout = setInterval(this.stopAsr, 3000);
       // }
     } else {
-      console.log('startAsr: not connected');
+      console.log('startAsr: not connected', this._cognitiveHubClient);
     }
   }
 
@@ -328,6 +339,9 @@ export default class CognitiveHub extends React.Component<AsrProps, AsrState> {
           </div>
           <div className='CognitiveHub-row'>
             <AudioWaveformVisualizer audioDataSource={this.state.visualizerSource} options={{ w: 256, h: 50, tickWidth: 1 }} />
+          </div>
+          <div className='CognitiveHub-time'>
+            {this.state.synchronizedTimeString}
           </div>
         </div>
       </div>
