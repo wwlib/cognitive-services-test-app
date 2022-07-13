@@ -1,6 +1,6 @@
 import Log from '../utils/Log';
 import parentLog from './log';
-import EarconManager from '../audio/EarconManager';
+import AudioFxManager from '../audio/AudioFxManager';
 import { CognitiveServicesConfig, CognitiveServicesConfigOptions } from 'cognitiveserviceslib';
 import AppSettings, { AppSettingsOptions } from './AppSettings';
 import CognitiveHubClientController from './CognitiveHubClientController';
@@ -15,7 +15,7 @@ export default class Model {
   constructor() {
     this.log = parentLog.createChild('Model');
     this.settings = new AppSettings();
-    EarconManager.Instance();
+    AudioFxManager.Instance();
   }
 
   setAppSettings(settings: AppSettingsOptions): void {

@@ -39,7 +39,7 @@ export default class CognitiveHubClientController extends EventEmitter {
         this._connected = false;
         this._commandExecutor = new ExampleCommandExecutor();
         this._syncOffset = 0;
-        this._synchronizedClock = new SynchronizedClock;
+        this._synchronizedClock = new SynchronizedClock();
         this._synchronizedClock.on('1sec', this.onSynchronizedClockUpdate)
         this._synchronizedClock.startUpdate()
     }

@@ -17,7 +17,7 @@ import AudioWaveformVisualizer from '../../components/AudioWaveformVisualizer/Au
 import AudioEqVisualizer from '../../components/AudioEqVisualizer/AudioEqVisualizer';
 import Model from '../../model/Model';
 import WakewordController from '../../audio/WakewordController';
-import EarconManager, { EarconTone } from '../../audio/EarconManager';
+import AudioFxManager, { AudioFxTone } from '../../audio/AudioFxManager';
 import PathUtils from '../../utils/PathUtils';
 import Timer from '../../utils/Timer';
 
@@ -118,7 +118,7 @@ export default class AsrStreaming extends React.Component<AsrProps, AsrState> {
   // }
 
   startAsr = () => {
-    EarconManager.Instance().playTone(EarconTone.LISTEN_START);
+    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_START);
     this._microphoneAudioSource = new MicrophoneAudioSource({
       targetSampleRate: 16000,
       monitorAudio: false,
@@ -201,7 +201,7 @@ export default class AsrStreaming extends React.Component<AsrProps, AsrState> {
     if (this._audioSourceWaveStreamer) this._audioSourceWaveStreamer.dispose();
     this._audioSourceWaveStreamer = undefined;
 
-    EarconManager.Instance().playTone(EarconTone.LISTEN_STOP);
+    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_STOP);
     if (this._microphoneAudioSource) {
       if (this._microphoneAudioSource.audioData) {
         let audioData = this._microphoneAudioSource.audioData;
@@ -317,7 +317,7 @@ export default class AsrStreaming extends React.Component<AsrProps, AsrState> {
         });
         break;
       case 'btnWakeword':
-        EarconManager.Instance().playTone(EarconTone.INITIALIZE);
+        AudioFxManager.Instance().playTone(AudioFxTone.INITIALIZE);
         if (this._wakewordController) {
           if (this._wakewordController.isRunning) {
             this._wakewordController.stop();

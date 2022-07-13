@@ -13,7 +13,7 @@ import AudioWaveformVisualizer from '../../components/AudioWaveformVisualizer/Au
 import AudioEqVisualizer from '../../components/AudioEqVisualizer/AudioEqVisualizer';
 import Model from '../../model/Model';
 import WakewordController from '../../audio/WakewordController';
-import EarconManager, { EarconTone } from '../../audio/EarconManager';
+import AudioFxManager, { AudioFxTone } from '../../audio/AudioFxManager';
 import PathUtils from '../../utils/PathUtils';
 // import Timer from '../../utils/Timer';
 import CognitiveHubClientController from '../../model/CognitiveHubClientController'
@@ -92,7 +92,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
   }
 
   onClockUpdate = (timeData: TimeData) => {
-    console.log(timeData)
+    // console.log(timeData)
     this.setState({
       synchronizedTimeString: timeData.simpleFormat,
     })
@@ -134,7 +134,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
   // }
 
   startAsr = () => {
-    EarconManager.Instance().playTone(EarconTone.LISTEN_START);
+    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_START);
     this._microphoneAudioSource = new MicrophoneAudioSource({
       targetSampleRate: 16000,
       monitorAudio: false,
@@ -184,7 +184,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       try {
         // { text: 'Do you like Mac and cheese?', confidence: 0.96467835 }
         message = JSON.stringify(results, null, 2);
-      } catch(error) {
+      } catch (error) {
         console.log(error);
         message = error;
       }
@@ -205,7 +205,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     if (this._audioSourceWaveStreamer) this._audioSourceWaveStreamer.dispose();
     this._audioSourceWaveStreamer = undefined;
 
-    EarconManager.Instance().playTone(EarconTone.LISTEN_STOP);
+    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_STOP);
     if (this._microphoneAudioSource) {
       if (this._microphoneAudioSource.audioData) {
         let audioData = this._microphoneAudioSource.audioData;
@@ -286,7 +286,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
         });
         break;
       case 'btnWakeword':
-        EarconManager.Instance().playTone(EarconTone.INITIALIZE);
+        AudioFxManager.Instance().playTone(AudioFxTone.INITIALIZE);
         if (this._wakewordController) {
           if (this._wakewordController.isRunning) {
             this._wakewordController.stop();
@@ -298,6 +298,13 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
             this._wakewordController.on('cancel', this.stopAsr);
           }
         }
+      case 'btnPlayMidi':
+        AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_START);
+        const startAtTime = new Date().getTime()
+        const scheduleOptions = {
+          channelsToPlay: [4]
+        }
+        AudioFxManager.Instance().playMidiFile('twinkle_twinkle_3_chan.mid', startAtTime, scheduleOptions); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
         break;
     }
   }
@@ -335,6 +342,10 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
             <button id='btnWakeword' type='button' className={`btn btn-primary App-button`}
               onClick={(event) => this.onButtonClicked(`btnWakeword`, event)}>
               Wakeword
+            </button>
+            <button id='btnPlayMidi' type='button' className={`btn btn-primary App-button`}
+              onClick={(event) => this.onButtonClicked(`btnPlayMidi`, event)}>
+              PlayMidi
             </button>
           </div>
           <div className='CognitiveHub-row'>
