@@ -16,6 +16,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
 
     set syncOffset(offset: number) {
         this._syncOffset = offset
+        AudioFxManager.Instance().syncOffset = this._syncOffset
     }
 
     executeCommand(command: RCSCommand, callback: CommandExecutorCallback) {
@@ -51,7 +52,11 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
             } else if (command.payload.midi.filename) {
                 const currentTime = new Date().getTime()
                 // convert synchronized starAtTime to local startAtTime (synchronized - syncOffset)
-                const startAtTime = command.payload.midi.startAtTime ? command.payload.midi.startAtTime - this._syncOffset : currentTime
+                const synchronizedStartAtTime = command.payload.midi.startAtTime
+                console.log(`play: midi:`)
+                console.log(`currentTime:`, currentTime)
+                console.log(`synchronized start time:`, synchronizedStartAtTime)
+                console.log(`_syncOffset:`, this._syncOffset)
                 const channelsToPlay = command.payload.midi.channelsToPlay || undefined
                 const scheduleOptions = {
                     channelsToPlay,
@@ -59,7 +64,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
                 const tempCallback = () => {
                     callback(command, RCSCommandStatus.OK)
                 }
-                AudioFxManager.Instance().playMidiFile(command.payload.midi.filename, startAtTime, scheduleOptions, tempCallback); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
+                AudioFxManager.Instance().playMidiFile(command.payload.midi.filename, synchronizedStartAtTime, scheduleOptions, tempCallback); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
             } else {
                 this.nop(command, callback)
             }

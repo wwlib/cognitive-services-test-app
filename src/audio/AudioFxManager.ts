@@ -15,9 +15,23 @@ export default class AudioFxManager {
 
     public musicController: WwMusicController;
 
+    private _syncOffset: number
+
     constructor(options?: AudioFxManagerOptions) {
         this.musicController = new WwMusicController();
         this.musicController.init();
+        this._syncOffset = 0
+    }
+
+    get syncOffset(): number {
+        return this._syncOffset
+    }
+
+    set syncOffset(offset: number) {
+        this._syncOffset = offset
+        if (this.musicController) {
+            this.musicController.syncOffset = this._syncOffset
+        }
     }
 
     static Instance(options?: AudioFxManagerOptions) {

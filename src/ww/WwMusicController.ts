@@ -17,7 +17,39 @@ console.log(`WwMusicController: configFile:`, configFile);
 
 export default class WwMusicController {
 
+    private _midiToMediaPlayer: MidiToMediaPlayer | undefined
+    private _synchronizedStartAtTime: number
+    private _syncOffset: number
+
     constructor() {
+        this._synchronizedStartAtTime = 0
+        this._syncOffset = 0
+    }
+
+    get startAtTime(): number {
+        return this._synchronizedStartAtTime - this._syncOffset
+    }
+
+    get synchronizedStartAtTime(): number {
+        return this._synchronizedStartAtTime
+    }
+
+    set synchronizedStartAtTime(time: number) {
+        this._synchronizedStartAtTime = time
+        if (this._midiToMediaPlayer && this._synchronizedStartAtTime) {
+            this._midiToMediaPlayer.setStartAtTime(this._synchronizedStartAtTime)
+        }
+    }
+
+    get syncOffset(): number {
+        return this._syncOffset
+    }
+
+    set syncOffset(offset: number) {
+        this._syncOffset = offset
+        if (this._midiToMediaPlayer && this._synchronizedStartAtTime) {
+            this._midiToMediaPlayer.setStartAtTime(this._synchronizedStartAtTime)
+        }
     }
 
     init() {
@@ -40,31 +72,30 @@ export default class WwMusicController {
         // InstrumentManager.instance.testPieAno();
     }
 
-    playMidiFile(midifile: string, startAtTime: number = 0, scheduleOptions?: any, callback?: any) {
+    playMidiFile(midifile: string, synchronizedStartAtTime: number, scheduleOptions?: any, callback?: any) {
         midifile = midifile || 'twinkle_twinkle.mid';
-
-
-        const midiToMediaPlayer = new MidiToMediaPlayer(rootPath);
-        midiToMediaPlayer.loadMidiFile(midifile);
+        if (this._midiToMediaPlayer) {
+            this._midiToMediaPlayer.dispose()
+            this._midiToMediaPlayer = undefined
+        }
+        this._midiToMediaPlayer = new MidiToMediaPlayer(rootPath);
+        this._midiToMediaPlayer.loadMidiFile(midifile);
+        this.synchronizedStartAtTime = synchronizedStartAtTime
         // midiToMediaPlayer.on('note', ((data: any) => {
         //     console.log('WwMusicController: on note:', data)
         // }))
 
-        if (!startAtTime) {
-            startAtTime = new Date().getTime();
-        }
-
         console.log(`playing midi file:`, scheduleOptions);
-        midiToMediaPlayer.scheduleAllNoteEvents(startAtTime, scheduleOptions, () => {
+        this._midiToMediaPlayer.scheduleAllNoteEvents(this.startAtTime, scheduleOptions, () => {
             console.log(`playMidiFile: done.`);
             this.playMidiNote(49);
             if (callback) {
                 callback()
             }
         })
-        midiToMediaPlayer.on('endOfFile', () => {
+        this._midiToMediaPlayer.on('endOfFile', () => {
             console.log('endOfFile')
         });
-        midiToMediaPlayer.playMidiFile(startAtTime)
+        this._midiToMediaPlayer.playMidiFile(this.startAtTime)
     }
 }
