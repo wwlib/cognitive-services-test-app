@@ -26,7 +26,7 @@ export default class WwMusicController {
         this._syncOffset = 0
     }
 
-    get startAtTime(): number {
+    get localStartAtTime(): number {
         return this._synchronizedStartAtTime - this._syncOffset
     }
 
@@ -35,9 +35,10 @@ export default class WwMusicController {
     }
 
     set synchronizedStartAtTime(time: number) {
+        console.log(`WwMusicController: set synchronizedStartAtTime: ${time}`)
         this._synchronizedStartAtTime = time
-        if (this._midiToMediaPlayer && this._synchronizedStartAtTime) {
-            this._midiToMediaPlayer.setStartAtTime(this._synchronizedStartAtTime)
+        if (this._midiToMediaPlayer && this.localStartAtTime) {
+            this._midiToMediaPlayer.setStartAtTime(this.localStartAtTime)
         }
     }
 
@@ -46,9 +47,10 @@ export default class WwMusicController {
     }
 
     set syncOffset(offset: number) {
+        console.log(`WwMusicController: set syncOffset: ${offset}`)
         this._syncOffset = offset
-        if (this._midiToMediaPlayer && this._synchronizedStartAtTime) {
-            this._midiToMediaPlayer.setStartAtTime(this._synchronizedStartAtTime)
+        if (this._midiToMediaPlayer && this.localStartAtTime) {
+            this._midiToMediaPlayer.setStartAtTime(this.localStartAtTime)
         }
     }
 
@@ -86,7 +88,7 @@ export default class WwMusicController {
         // }))
 
         console.log(`playing midi file:`, scheduleOptions);
-        this._midiToMediaPlayer.scheduleAllNoteEvents(this.startAtTime, scheduleOptions, () => {
+        this._midiToMediaPlayer.scheduleAllNoteEvents(this.localStartAtTime, scheduleOptions, () => {
             console.log(`playMidiFile: done.`);
             this.playMidiNote(49);
             if (callback) {
@@ -96,6 +98,6 @@ export default class WwMusicController {
         this._midiToMediaPlayer.on('endOfFile', () => {
             console.log('endOfFile')
         });
-        this._midiToMediaPlayer.playMidiFile(this.startAtTime)
+        this._midiToMediaPlayer.playMidiFile(this.localStartAtTime)
     }
 }
