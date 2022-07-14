@@ -26,7 +26,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
                 this.executePlayCommand(command, callback)
                 break;
             default:
-                callback(command, RCSCommandStatus.unimplemented, `Command ${command.name} unimplemented.`)
+                callback(command, RCSCommandStatus.unimplemented, new Date().getTime() + this._syncOffset, `Command ${command.name} unimplemented.`)
                 break;
         }
 
@@ -47,7 +47,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
                 }
                 setTimeout(() => {
                     AudioFxManager.Instance().playMidiNote(note, channel, volume)
-                    callback(command, RCSCommandStatus.OK)
+                    callback(command, RCSCommandStatus.OK, new Date().getTime() + this._syncOffset)
                 }, scheduleOffset)
             } else if (command.payload.midi.filename) {
                 const currentTime = new Date().getTime()
@@ -62,7 +62,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
                     channelsToPlay,
                 }
                 const tempCallback = () => {
-                    callback(command, RCSCommandStatus.OK)
+                    callback(command, RCSCommandStatus.OK, new Date().getTime() + this._syncOffset)
                 }
                 AudioFxManager.Instance().playMidiFile(command.payload.midi.filename, synchronizedStartAtTime, scheduleOptions, tempCallback); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
             } else {
@@ -80,6 +80,6 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
         console.log(`currentTime: ${currentTime}`)
         console.log(`syncOffset: ${this._syncOffset}`)
         console.log(command)
-        callback(command, RCSCommandStatus.OK)
+        callback(command, RCSCommandStatus.OK, new Date().getTime() + this._syncOffset)
     }
 }

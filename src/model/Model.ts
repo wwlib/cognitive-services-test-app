@@ -29,7 +29,7 @@ export default class Model {
   getCognitiveHubClientController(reset: boolean = false): CognitiveHubClientController | undefined {
     if (reset) {
       if (this._cognitiveHubClientController) {
-        this._cognitiveHubClientController.disconnect()
+        this._cognitiveHubClientController.dispose()
         this._cognitiveHubClientController = undefined
       }
     }

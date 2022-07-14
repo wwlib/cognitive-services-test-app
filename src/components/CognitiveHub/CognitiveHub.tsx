@@ -85,10 +85,10 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
   componentWillUnmount() {
     if (this._wakewordController) this._wakewordController.dispose();
     if (this._cognitiveHubClient) {
-      this._cognitiveHubClient.disconnect();
+      this._cognitiveHubClient.dispose();
       this._cognitiveHubClient.off('asrEnded', this.onAsrEnded);
+      this._cognitiveHubClient = undefined;
     }
-    this._cognitiveHubClient = undefined;
   }
 
   onClockUpdate = (timeData: TimeData) => {

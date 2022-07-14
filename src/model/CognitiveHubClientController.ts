@@ -91,6 +91,30 @@ export default class CognitiveHubClientController extends EventEmitter {
         this._socket.emit('asrAudio', data);
     }
 
+    handleTimesyncChange = (offset: number) => {
+        console.log('timesync: changed offset: ' + offset + ' ms');
+        this._syncOffset = offset
+        if (this._synchronizedClock) {
+            this._synchronizedClock.onSyncOffsetChanged(offset)
+        }
+        if (this._commandExecutor) {
+            this._commandExecutor.syncOffset = offset
+        }
+        const command = {
+            id: 'tbd',
+            type: 'sync',
+            name: 'syncOffset',
+            payload: {
+                syncOffset: offset,
+            }
+        }
+        if (this._socket) {
+            this._socket.emit('command', command)
+        } else {
+            console.log(`_timesync on change: _socket is undefined.`)
+        }
+    }
+
     async connect() {
         if (this._connected) {
             return
@@ -115,29 +139,11 @@ export default class CognitiveHubClientController extends EventEmitter {
                 interval: 5000
             });
 
-            this._timesync.on('sync', (state: string) => {
-                // console.log('timesync: sync ' + state + '');
-            });
+            // this._timesync.on('sync', (state: string) => {
+            //     // console.log('timesync: sync ' + state + '');
+            // });
 
-            this._timesync.on('change', (offset: number) => {
-                console.log('timesync: changed offset: ' + offset + ' ms');
-                this._syncOffset = offset
-                if (this._synchronizedClock) {
-                    this._synchronizedClock.onSyncOffsetChanged(offset)
-                }
-                if (this._commandExecutor) {
-                    this._commandExecutor.syncOffset = offset
-                }
-                const command = {
-                    id: 'tbd',
-                    type: 'sync',
-                    name: 'syncOffset',
-                    payload: {
-                        syncOffset: offset,
-                    }
-                }
-                this._socket.emit('command', command)
-            });
+            this._timesync.on('change', this.handleTimesyncChange);
 
             this._timesync.send = function (socket: any, data: any, timeout: number): Promise<void> {
                 //console.log('send', data);
@@ -168,14 +174,19 @@ export default class CognitiveHubClientController extends EventEmitter {
             });
 
             this._socket.on('disconnect', () => {
-                this._connected = false;
                 console.log(`on disconnect. closing...`);
+                this._socket = undefined
+                this.dispose()
             });
 
             CommandProcessor.getInstance().setCommandExecutor(this._commandExecutor)
             CommandProcessor.getInstance().on('commandCompleted', (commandAck: RCSCommandAck) => {
                 console.log(`command completed:`, commandAck)
-                this._socket.emit('command', commandAck)
+                if (this._socket) {
+                    this._socket.emit('command', commandAck)
+                } else {
+                    console.log(`on commandCompleted: _socket is undefined.`, this)
+                }
             })
 
             this._socket.on('command', function (command: RCSCommand) {
@@ -210,16 +221,18 @@ export default class CognitiveHubClientController extends EventEmitter {
         this.emit('clockUpdate', timeData)
     }
 
-    disconnect() {
+    dispose() {
+        console.log(`CognitiveHubClientController: DISPOSE`)
+        if (this._socket) {
+            this._socket.close();
+            this._socket = undefined;
+        }
         this._connected = false;
         if (this._timesync) {
+            this._timesync.off('change', this.handleTimesyncChange);
             this._timesync.destroy();
         }
         this._timesync = undefined;
-        if (this._socket) {
-            this._socket.close();
-        }
-        this._socket = undefined;
         if (this._synchronizedClock) {
             this._synchronizedClock.dispose()
             this._synchronizedClock = undefined
