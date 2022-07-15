@@ -39,7 +39,7 @@
   "dependencies": {
     "axios": "^0.27.2",
     "cognitiveserviceslib": "github:wwlib/cognitiveserviceslib#feature/andrew/asr-tweaks",
-    "electron": "^5.0.0",
+    "electron": "^15.5.5",
     "jsonfile": "^6.1.0",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
