@@ -26,6 +26,10 @@ export default class WwMusicController {
         this._syncOffset = 0
     }
 
+    get midiToMediaPlayer(): MidiToMediaPlayer | undefined {
+        return this._midiToMediaPlayer
+    }
+
     get localStartAtTime(): number {
         return this._synchronizedStartAtTime - this._syncOffset
     }
@@ -81,6 +85,7 @@ export default class WwMusicController {
             this._midiToMediaPlayer = undefined
         }
         this._midiToMediaPlayer = new MidiToMediaPlayer(rootPath);
+        this._midiToMediaPlayer.debug = true
         this._midiToMediaPlayer.loadMidiFile(midifile);
         this.synchronizedStartAtTime = synchronizedStartAtTime
         // midiToMediaPlayer.on('note', ((data: any) => {

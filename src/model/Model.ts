@@ -15,7 +15,7 @@ export default class Model {
   constructor() {
     this.log = parentLog.createChild('Model');
     this.settings = new AppSettings();
-    AudioFxManager.Instance();
+    AudioFxManager.getInstance(); // initialize the AudioFxManager
   }
 
   setAppSettings(settings: AppSettingsOptions): void {

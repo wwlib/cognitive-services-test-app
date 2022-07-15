@@ -35,6 +35,8 @@ export interface CognitiveHubState {
   asrResult: string;
   visualizerSource: AudioSource | AudioSink | undefined;
   synchronizedTimeString: string
+  audioContextElapsedTime: number
+  timeBgColor: string
 }
 
 export interface AsrHypothesis {
@@ -69,6 +71,8 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       asrResult: '',
       visualizerSource: undefined,
       synchronizedTimeString: 'TBD',
+      audioContextElapsedTime: 0,
+      timeBgColor: 'black'
     };
   }
 
@@ -91,10 +95,16 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     }
   }
 
-  onClockUpdate = (timeData: TimeData) => {
+  onClockUpdate = (data: any) => {
     // console.log(timeData)
+    const timeData: TimeData = data.timeData
+    const second = Math.round(timeData.synchronized / 1000)
+    const timeBgColor = second % 2 === 0 ? 'black' : '#428bca'
+    const audioContextElapsedTime = data.audioContextElapsedTime
     this.setState({
       synchronizedTimeString: timeData.simpleFormat,
+      audioContextElapsedTime: audioContextElapsedTime,
+      timeBgColor: timeBgColor
     })
   }
 
@@ -134,7 +144,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
   // }
 
   startAsr = () => {
-    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_START);
+    AudioFxManager.getInstance().playTone(AudioFxTone.LISTEN_START);
     this._microphoneAudioSource = new MicrophoneAudioSource({
       targetSampleRate: 16000,
       monitorAudio: false,
@@ -205,7 +215,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     if (this._audioSourceWaveStreamer) this._audioSourceWaveStreamer.dispose();
     this._audioSourceWaveStreamer = undefined;
 
-    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_STOP);
+    AudioFxManager.getInstance().playTone(AudioFxTone.LISTEN_STOP);
     if (this._microphoneAudioSource) {
       if (this._microphoneAudioSource.audioData) {
         let audioData = this._microphoneAudioSource.audioData;
@@ -286,7 +296,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
         });
         break;
       case 'btnWakeword':
-        AudioFxManager.Instance().playTone(AudioFxTone.INITIALIZE);
+        AudioFxManager.getInstance().playTone(AudioFxTone.INITIALIZE);
         if (this._wakewordController) {
           if (this._wakewordController.isRunning) {
             this._wakewordController.stop();
@@ -299,12 +309,12 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
           }
         }
       case 'btnPlayMidi':
-        AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_START);
+        AudioFxManager.getInstance().playTone(AudioFxTone.LISTEN_START);
         const startAtTime = new Date().getTime()
         const scheduleOptions = {
           channelsToPlay: [4]
         }
-        AudioFxManager.Instance().playMidiFile('twinkle_twinkle_3_chan.mid', startAtTime, scheduleOptions); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
+        AudioFxManager.getInstance().playMidiFile('twinkle_twinkle_3_chan.mid', startAtTime, scheduleOptions); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
         break;
     }
   }
@@ -351,8 +361,11 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
           <div className='CognitiveHub-row'>
             <AudioWaveformVisualizer audioDataSource={this.state.visualizerSource} options={{ w: 256, h: 50, tickWidth: 1 }} />
           </div>
-          <div className='CognitiveHub-time'>
+          <div className='CognitiveHub-time' style={{ backgroundColor: this.state.timeBgColor }}>
             {this.state.synchronizedTimeString}
+          </div>
+          <div className='CognitiveHub-time'>
+            {this.state.audioContextElapsedTime}
           </div>
         </div>
       </div>

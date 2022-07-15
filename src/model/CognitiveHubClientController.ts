@@ -1,5 +1,7 @@
 import { EventEmitter } from "events";
 import { CommandProcessor, RCSCommand, RCSCommandAck, SynchronizedClock, TimeData } from 'robokit-command-system';
+import AudioFxManager from "../audio/AudioFxManager";
+import WwMusicController from "../ww/WwMusicController";
 import ExampleCommandExecutor from "./ExampleCommandExecutor";
 
 const axios = require('axios');
@@ -189,9 +191,10 @@ export default class CognitiveHubClientController extends EventEmitter {
                 }
             })
 
-            this._socket.on('command', function (command: RCSCommand) {
+            this._socket.on('command', (command: RCSCommand) => {
                 console.log('command', command);
-                CommandProcessor.getInstance().processCommand(command)
+                const synchronizedTime = this._synchronizedClock ? this._synchronizedClock.synchronizedTime : -1
+                CommandProcessor.getInstance().processCommand(command, synchronizedTime)
             });
 
             this._socket.on('message', function (data: any) {
@@ -218,7 +221,13 @@ export default class CognitiveHubClientController extends EventEmitter {
     }
 
     onSynchronizedClockUpdate = (timeData: TimeData) => {
-        this.emit('clockUpdate', timeData)
+        let audioContextElapsedTime = 0
+        const musicController: WwMusicController = AudioFxManager.getInstance().musicController
+        if (musicController && musicController.midiToMediaPlayer && musicController.midiToMediaPlayer.acClock) {
+            audioContextElapsedTime = musicController.midiToMediaPlayer.acClock.calculatedAcElapsedTime
+            audioContextElapsedTime = Math.round(audioContextElapsedTime * 1000) / 1000
+        }
+        this.emit('clockUpdate', { timeData, audioContextElapsedTime })
     }
 
     dispose() {

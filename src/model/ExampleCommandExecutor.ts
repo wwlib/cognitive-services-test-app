@@ -16,7 +16,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
 
     set syncOffset(offset: number) {
         this._syncOffset = offset
-        AudioFxManager.Instance().syncOffset = this._syncOffset
+        AudioFxManager.getInstance().syncOffset = this._syncOffset
     }
 
     executeCommand(command: RCSCommand, callback: CommandExecutorCallback) {
@@ -46,7 +46,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
                     scheduleOffset = startAtTime - (currentTime + this._syncOffset)
                 }
                 setTimeout(() => {
-                    AudioFxManager.Instance().playMidiNote(note, channel, volume)
+                    AudioFxManager.getInstance().playMidiNote(note, channel, volume)
                     callback(command, RCSCommandStatus.OK, new Date().getTime() + this._syncOffset)
                 }, scheduleOffset)
             } else if (command.payload.midi.filename) {
@@ -64,7 +64,7 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
                 const tempCallback = () => {
                     callback(command, RCSCommandStatus.OK, new Date().getTime() + this._syncOffset)
                 }
-                AudioFxManager.Instance().playMidiFile(command.payload.midi.filename, synchronizedStartAtTime, scheduleOptions, tempCallback); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
+                AudioFxManager.getInstance().playMidiFile(command.payload.midi.filename, synchronizedStartAtTime, scheduleOptions, tempCallback); //('silent_night_easy.mid'); //('twinkle_twinkle.mid');
             } else {
                 this.nop(command, callback)
             }

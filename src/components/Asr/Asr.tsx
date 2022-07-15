@@ -127,7 +127,7 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
   }
 
   startAsr() {
-    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_START);
+    AudioFxManager.getInstance().playTone(AudioFxTone.LISTEN_START);
     this._microphoneAudioSource = new MicrophoneAudioSource({
       targetSampleRate: 16000,
       monitorAudio: false,
@@ -175,7 +175,7 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
     if (this._audioSourceWaveStreamer) this._audioSourceWaveStreamer.dispose();
     this._audioSourceWaveStreamer = undefined;
 
-    AudioFxManager.Instance().playTone(AudioFxTone.LISTEN_STOP);
+    AudioFxManager.getInstance().playTone(AudioFxTone.LISTEN_STOP);
     if (this._microphoneAudioSource) {
       if (this._microphoneAudioSource.audioData) {
         let audioData = this._microphoneAudioSource.audioData;
@@ -280,7 +280,7 @@ export default class Asr extends React.Component<AsrProps, AsrState> {
         });
         break;
       case 'btnWakeword':
-        AudioFxManager.Instance().playTone(AudioFxTone.INITIALIZE);
+        AudioFxManager.getInstance().playTone(AudioFxTone.INITIALIZE);
         if (this._wakewordController) {
           if (this._wakewordController.isRunning) {
             this._wakewordController.stop();

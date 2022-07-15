@@ -34,7 +34,7 @@ export default class AudioFxManager {
         }
     }
 
-    static Instance(options?: AudioFxManagerOptions) {
+    static getInstance(options?: AudioFxManagerOptions) {
         return this._instance || (this._instance = new this(options));
     }
 
