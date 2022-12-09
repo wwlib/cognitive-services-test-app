@@ -106,7 +106,7 @@ export default class Nlu extends React.Component<NluProps, NluState> {
         <div className='Nlu-row'>
           <button id='btnNluStart' type='button' className={`btn btn-primary App-button`}
             onClick={(event) => this.onButtonClicked(`btnNluStart`, event)}>
-            NlusStart
+            NluStart
           </button>
         </div>
       </div>

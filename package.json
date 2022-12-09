@@ -4,7 +4,7 @@
   "main": "public/electron.js",
   "homepage": "./",
   "private": true,
-  "engines": {
+  "engines-x": {
     "npm": ">=7.24.0",
     "node": ">=16.10.0"
   },
@@ -43,6 +43,7 @@
     "jsonfile": "^6.1.0",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
+    "react-webcam": "^7.0.1",
     "robokit-command-system": "github:wwlib/robokit-command-system#bugfix/andrew/clock-tweaks",
     "socket.io-client": "^4.5.1",
     "timesync": "^1.0.10",

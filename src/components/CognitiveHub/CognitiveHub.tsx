@@ -18,6 +18,7 @@ import PathUtils from '../../utils/PathUtils';
 // import Timer from '../../utils/Timer';
 import CognitiveHubClientController from '../../model/CognitiveHubClientController'
 import { TimeData } from 'robokit-command-system';
+import Webcam from "react-webcam"
 
 let fs: any;
 // let path: any;
@@ -37,6 +38,8 @@ export interface CognitiveHubState {
   synchronizedTimeString: string
   audioContextElapsedTime: number
   timeBgColor: string
+  availableCameraDevices: any[]
+  cameraDeviceId: string
 }
 
 export interface AsrHypothesis {
@@ -63,6 +66,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
   private _audioSourceWaveStreamer: AudioSourceWaveStreamer | undefined;
   // private _asrTimer: Timer;
   private _cognitiveHubClient: CognitiveHubClientController | undefined;
+  private _webcamGetScreenshotFunction: any
 
   constructor(props: CognitiveHubProps) {
     super(props);
@@ -72,8 +76,33 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       visualizerSource: undefined,
       synchronizedTimeString: 'TBD',
       audioContextElapsedTime: 0,
-      timeBgColor: 'black'
+      timeBgColor: 'black',
+      availableCameraDevices: [],
+      cameraDeviceId: '',
     };
+  }
+
+  getAvailableCameraButtons = () => {
+    const availableCameras: any[] = []
+    navigator.mediaDevices.enumerateDevices().then((mediaDevices) => {
+      // console.log(mediaDevices)
+      mediaDevices.forEach((mediaDevice: any) => {
+        if (mediaDevice.kind === 'videoinput') {
+          const deviceId: string = mediaDevice.deviceId
+          const deviceLabel: string = mediaDevice.label
+          const button = <button className={`btn btn-primary App-button`} key={deviceId} onClick={() => this.onCameraSelected(deviceId)}>{deviceLabel.substring(0, 16)}</button>
+          // deviceId: "84af885306903b6dfb9c4c95de6f33ef1364bfa075a40472456ad63d7815a0b6"
+          // groupId: "e01b6babb6e41da1ec25835cdce7f3557a760e1d9abd5bd24a1256b36355d554"
+          // kind: "videoinput"
+          // label: "FaceTime HD Camera (Built-in) (05ac:8514)"
+          availableCameras.push(button)
+          if (deviceLabel.indexOf('Built-in') >= 0) {
+            this.setState({ cameraDeviceId: deviceId })
+          }
+        }
+      })
+      this.setState({ availableCameraDevices: availableCameras })
+    })
   }
 
   componentDidMount() {
@@ -83,7 +112,9 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       this._cognitiveHubClient.connect();
       this._cognitiveHubClient.on('asrEnded', this.onAsrEnded);
       this._cognitiveHubClient.on('clockUpdate', this.onClockUpdate);
+      this._cognitiveHubClient.on('getBase64Photo', this.getBase64Photo);
     }
+    this.getAvailableCameraButtons()
   }
 
   componentWillUnmount() {
@@ -91,6 +122,8 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     if (this._cognitiveHubClient) {
       this._cognitiveHubClient.dispose();
       this._cognitiveHubClient.off('asrEnded', this.onAsrEnded);
+      this._cognitiveHubClient.off('clockUpdate', this.onClockUpdate);
+      this._cognitiveHubClient.off('getBase64Photo', this.getBase64Photo);
       this._cognitiveHubClient = undefined;
     }
   }
@@ -224,6 +257,15 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     }
   }
 
+  // Photo
+
+  getBase64Photo = () => {
+    if (this._webcamGetScreenshotFunction && this._cognitiveHubClient) {
+      const base64PhotoData = this._webcamGetScreenshotFunction()
+      this._cognitiveHubClient.sendBase64Photo(base64PhotoData)
+    }
+  }
+
   onButtonClicked(action: string, event: any) {
     event.preventDefault();
     switch (action) {
@@ -319,7 +361,18 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     }
   }
 
+  onCameraSelected = (deviceId: string) => {
+    this.setState({ cameraDeviceId: deviceId })
+  }
+
   render() {
+    const videoConstraints = {
+      width: 1280,
+      height: 720,
+      facingMode: "user",
+      deviceId: this.state.cameraDeviceId
+    }
+
     return (
       <div className="CognitiveHub">
         <div className='CognitiveHub-controls'>
@@ -366,6 +419,35 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
           </div>
           <div className='CognitiveHub-time'>
             {this.state.audioContextElapsedTime}
+          </div>
+          <div className='CognitiveHub-row'>
+            {this.state.availableCameraDevices}
+          </div>
+          <div className='CognitiveHub-row'>
+            <Webcam
+              audio={false}
+              height={720}
+              screenshotFormat="image/jpeg"
+              width={1280}
+              videoConstraints={videoConstraints}
+              mirrored={true}
+            >
+              {({ getScreenshot }) => {
+                this._webcamGetScreenshotFunction = getScreenshot
+                return <button className={`btn btn-primary App-button`}
+                  onClick={() => {
+                    const imageSrc = getScreenshot()
+                    console.log(imageSrc)
+                    if (imageSrc && this._cognitiveHubClient) {
+                      this._cognitiveHubClient.sendBase64Photo(imageSrc);
+                    }
+                  }}
+                >
+                  Capture photo
+                </button>
+              }
+              }
+            </Webcam>
           </div>
         </div>
       </div>

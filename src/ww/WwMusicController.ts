@@ -51,7 +51,7 @@ export default class WwMusicController {
     }
 
     set syncOffset(offset: number) {
-        console.log(`WwMusicController: set syncOffset: ${offset}`)
+        // console.log(`WwMusicController: set syncOffset: ${offset}`)
         this._syncOffset = offset
         if (this._midiToMediaPlayer && this.localStartAtTime) {
             this._midiToMediaPlayer.setStartAtTime(this.localStartAtTime)

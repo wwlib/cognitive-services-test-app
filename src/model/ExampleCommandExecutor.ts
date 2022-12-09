@@ -25,13 +25,14 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
             case RCSCommandName.play:
                 this.executePlayCommand(command, callback)
                 break;
+            case 'getBase64Photo': // TODO: add RCSCommandName.getBase64Photo
+                this.executeGetBase64PhotoCommand(command, callback)
+                break;
             default:
                 callback(command, RCSCommandStatus.unimplemented, new Date().getTime() + this._syncOffset, `Command ${command.name} unimplemented.`)
                 break;
         }
-
     }
-
 
     executePlayCommand(command: RCSCommand, callback: CommandExecutorCallback) {
         if (command.payload && command.payload.midi) {
@@ -72,6 +73,16 @@ export default class ExampleCommandExecutor implements ICommandExecutor {
             // NOP
             this.nop(command, callback)
         }
+    }
+    
+    executeGetBase64PhotoCommand(command: RCSCommand, callback: CommandExecutorCallback) {
+        // actual execution is currently handled in CognitiveHubClientController
+        console.log(`ExampleCommandExecutor: getBase64Photo: PLACEHOLDER`)
+        const currentTime = new Date().getTime()
+        console.log(`currentTime: ${currentTime}`)
+        console.log(`syncOffset: ${this._syncOffset}`)
+        console.log(command)
+        callback(command, RCSCommandStatus.OK, new Date().getTime() + this._syncOffset)
     }
 
     nop(command: RCSCommand, callback: CommandExecutorCallback) {

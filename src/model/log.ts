@@ -1,2 +1,2 @@
 import parentLog from '../log';
-export default parentLog.createChild('model');
+export default parentLog.createChild('Model');

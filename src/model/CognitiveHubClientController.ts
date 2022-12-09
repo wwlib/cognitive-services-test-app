@@ -81,6 +81,8 @@ export default class CognitiveHubClientController extends EventEmitter {
         });
     }
 
+    //// AUDIO
+
     audioStart() {
         this._socket.emit('asrAudioStart');
     }
@@ -93,8 +95,14 @@ export default class CognitiveHubClientController extends EventEmitter {
         this._socket.emit('asrAudio', data);
     }
 
+    //// PHOTO
+
+    sendBase64Photo(base64PhotoData: string) {
+        this._socket.emit('base64Photo', base64PhotoData);
+    }
+
     handleTimesyncChange = (offset: number) => {
-        console.log('timesync: changed offset: ' + offset + ' ms');
+        // console.log('timesync: changed offset: ' + offset + ' ms');
         this._syncOffset = offset
         if (this._synchronizedClock) {
             this._synchronizedClock.onSyncOffsetChanged(offset)
@@ -194,11 +202,18 @@ export default class CognitiveHubClientController extends EventEmitter {
             this._socket.on('command', (command: RCSCommand) => {
                 console.log('command', command);
                 const synchronizedTime = this._synchronizedClock ? this._synchronizedClock.synchronizedTime : -1
-                CommandProcessor.getInstance().processCommand(command, synchronizedTime)
+                if (command.name === 'getBase64Photo') { // special case that needs access to the robokit react component
+                    this.emit('getBase64Photo') // will be received by CognitiveHub.tsx which will then call [this].sendBase64Photo()
+                    // call the command processor to generate the ACK
+                    // TODO: this is hacky
+                    CommandProcessor.getInstance().processCommand(command, synchronizedTime)
+                } else {
+                    CommandProcessor.getInstance().processCommand(command, synchronizedTime)
+                }
             });
 
             this._socket.on('message', function (data: any) {
-                console.log(data.message);
+                console.log(data);
             });
 
             this._socket.emit('message', 'CONNECTED');
@@ -247,5 +262,6 @@ export default class CognitiveHubClientController extends EventEmitter {
             this._synchronizedClock = undefined
         }
         this.removeAllListeners()
+        CommandProcessor.getInstance().removeAllListeners() // TODO: remove specific listeners
     }
 }

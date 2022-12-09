@@ -1,5 +1,5 @@
 import Log from '../utils/Log';
-import parentLog from './log';
+import log from './log';
 import AudioFxManager from '../audio/AudioFxManager';
 import { CognitiveServicesConfig, CognitiveServicesConfigOptions } from 'cognitiveserviceslib';
 import AppSettings, { AppSettingsOptions } from './AppSettings';
@@ -13,7 +13,7 @@ export default class Model {
   private _cognitiveHubClientController: CognitiveHubClientController | undefined;
 
   constructor() {
-    this.log = parentLog.createChild('Model');
+    this.log = log;
     this.settings = new AppSettings();
     AudioFxManager.getInstance(); // initialize the AudioFxManager
   }
