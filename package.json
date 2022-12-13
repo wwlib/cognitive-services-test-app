@@ -44,7 +44,7 @@
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-webcam": "^7.0.1",
-    "robokit-command-system": "github:wwlib/robokit-command-system#bugfix/andrew/clock-tweaks",
+    "robokit-command-system": "github:wwlib/robokit-command-system#6860c1d209576701d1297e2528108de603c351a7",
     "socket.io-client": "^4.5.1",
     "timesync": "^1.0.10",
     "wavefile": "^11.0.0",

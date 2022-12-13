@@ -11014,9 +11014,9 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
     hash-base "^3.0.0"
     inherits "^2.0.1"
 
-"robokit-command-system@github:wwlib/robokit-command-system#bugfix/andrew/clock-tweaks":
+"robokit-command-system@github:wwlib/robokit-command-system#6860c1d209576701d1297e2528108de603c351a7":
   version "0.0.1"
-  resolved "https://codeload.github.com/wwlib/robokit-command-system/tar.gz/82e60628282cf0e83cd3ca802797818cce42b545"
+  resolved "https://codeload.github.com/wwlib/robokit-command-system/tar.gz/6860c1d209576701d1297e2528108de603c351a7"
   dependencies:
     uuid "^8.3.2"
 
