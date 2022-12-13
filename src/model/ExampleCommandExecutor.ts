@@ -2,15 +2,16 @@ import {
     RCSCommand,
     RCSCommandName,
     RCSCommandStatus,
-    ICommandExecutor,
+    AbstractCommandExecutor,
     CommandExecutorCallback
 } from 'robokit-command-system'
 import AudioFxManager from '../audio/AudioFxManager'
-export default class ExampleCommandExecutor implements ICommandExecutor {
+export default class ExampleCommandExecutor extends AbstractCommandExecutor {
 
     private _syncOffset: number
 
-    constructor() {
+    constructor(id: string) {
+        super(id)
         this._syncOffset = 0
     }
 

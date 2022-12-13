@@ -11016,7 +11016,7 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
 
 "robokit-command-system@github:wwlib/robokit-command-system#bugfix/andrew/clock-tweaks":
   version "0.0.1"
-  resolved "https://codeload.github.com/wwlib/robokit-command-system/tar.gz/b8ab3cc854431e06e7270bd190d151f6bda521b2"
+  resolved "https://codeload.github.com/wwlib/robokit-command-system/tar.gz/82e60628282cf0e83cd3ca802797818cce42b545"
   dependencies:
     uuid "^8.3.2"
 
