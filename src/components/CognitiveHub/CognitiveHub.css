@@ -19,11 +19,17 @@
 }
 
 .CognitiveHub-controls {
-
+  width: 100%;
 }
 
 .CognitiveHub-row {
   margin-top: 6px;
+  width: 600px;
+  margin: auto;
+}
+
+.CognitiveHub-row.webcam {
+  width: 100%
 }
 
 .CognitiveHub-body {

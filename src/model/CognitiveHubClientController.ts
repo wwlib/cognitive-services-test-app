@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { CommandProcessor, RCSCommand, RCSCommandAck, SynchronizedClock, TimeData } from 'robokit-command-system';
+import { CommandProcessor, RCSCommand, RCSCommandAck, RCSCommandType, SynchronizedClock, TimeData } from 'robokit-command-system';
 import AudioFxManager from "../audio/AudioFxManager";
 import WwMusicController from "../ww/WwMusicController";
 import ExampleCommandExecutor from "./ExampleCommandExecutor";
@@ -99,6 +99,25 @@ export default class CognitiveHubClientController extends EventEmitter {
 
     sendBase64Photo(base64PhotoData: string) {
         this._socket.emit('base64Photo', base64PhotoData);
+    }
+
+    //// TTS
+
+    sendTTSCommand(promptText: string) {
+        const command: RCSCommand = {
+            id: 'tbd',
+            source: 'CSTA',
+            targetAccountId: this._accountId,
+            type: RCSCommandType.hubCommand,
+            name: 'tts',
+            payload: {
+                inputText: promptText,
+            },
+            createdAtTime: this._synchronizedClock?.synchronizedTime || 0
+        }
+        if (this._socket) {
+            this._socket.emit('command', command)
+        }
     }
 
     handleTimesyncChange = (offset: number) => {
@@ -218,6 +237,8 @@ export default class CognitiveHubClientController extends EventEmitter {
 
             this._socket.emit('message', 'CONNECTED');
 
+            // ASR
+
             this._socket.on('asrSOS', function () {
                 console.log(`asrSOS`);
             });
@@ -230,6 +251,29 @@ export default class CognitiveHubClientController extends EventEmitter {
                 console.log(`asrEnded`, data);
                 this.emit('asrEnded', data);
             });
+
+            // TTS
+
+            this._socket.on('ttsAudioStart', (data: any) => {
+                console.log(`ttsAudioStart`, data);
+                this.emit('ttsAudioStart', data);
+            });
+
+            this._socket.on('ttsAudio', (data: any) => {
+                console.log(`ttsAudio`, data);
+                this.emit('ttsAudio', data);
+            });
+
+            this._socket.on('ttsAudioEnd', (data: any) => {
+                console.log(`ttsAudioEnd`, data);
+                this.emit('ttsAudioEnd', data);
+            });
+
+            this._socket.on('ttsAudioError', (data: any) => {
+                console.log(`ttsAudioError`, data);
+                this.emit('ttsAudioError', data);
+            });
+
         } else {
             throw new Error('Invalid or undefined access_token and/or serviceUrl.')
         }

@@ -7,6 +7,7 @@ import {
   MicrophoneAudioSource,
   MicrophoneAudioSourceOptions,
   AudioUtils,
+  AudioContextAudioSink,
 } from 'cognitiveserviceslib';
 import './CognitiveHub.css';
 import AudioWaveformVisualizer from '../../components/AudioWaveformVisualizer/AudioWaveformVisualizer';
@@ -40,6 +41,7 @@ export interface CognitiveHubState {
   timeBgColor: string
   availableCameraDevices: any[]
   cameraDeviceId: string
+  ttsInput: string
 }
 
 export interface AsrHypothesis {
@@ -67,6 +69,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
   // private _asrTimer: Timer;
   private _cognitiveHubClient: CognitiveHubClientController | undefined;
   private _webcamGetScreenshotFunction: any
+  private _audioContextAudioSink: AudioContextAudioSink | undefined;
 
   constructor(props: CognitiveHubProps) {
     super(props);
@@ -79,6 +82,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       timeBgColor: 'black',
       availableCameraDevices: [],
       cameraDeviceId: '',
+      ttsInput: '',
     };
   }
 
@@ -113,6 +117,10 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       this._cognitiveHubClient.on('asrEnded', this.onAsrEnded);
       this._cognitiveHubClient.on('clockUpdate', this.onClockUpdate);
       this._cognitiveHubClient.on('getBase64Photo', this.getBase64Photo);
+      this._cognitiveHubClient.on('ttsAudioStart', this.onTtsAudioStart);
+      this._cognitiveHubClient.on('ttsAudio', this.onTtsAudio);
+      this._cognitiveHubClient.on('ttsAudioEnd', this.onTtsAudioEnd);
+      this._cognitiveHubClient.on('ttsAudioError', this.onTtsAudioError);
     }
     this.getAvailableCameraButtons()
   }
@@ -124,6 +132,10 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       this._cognitiveHubClient.off('asrEnded', this.onAsrEnded);
       this._cognitiveHubClient.off('clockUpdate', this.onClockUpdate);
       this._cognitiveHubClient.off('getBase64Photo', this.getBase64Photo);
+      this._cognitiveHubClient.off('ttsAudioStart', this.onTtsAudioStart);
+      this._cognitiveHubClient.off('ttsAudio', this.onTtsAudio);
+      this._cognitiveHubClient.off('ttsAudioEnd', this.onTtsAudioEnd);
+      this._cognitiveHubClient.off('ttsAudioError', this.onTtsAudioError);
       this._cognitiveHubClient = undefined;
     }
   }
@@ -175,6 +187,8 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
   //   const resultsText: string = JSON.stringify(results, null, 2);
   //   return hypothesesText + '\n' + resultsText;
   // }
+
+  // ASR
 
   startAsr = () => {
     AudioFxManager.getInstance().playTone(AudioFxTone.LISTEN_START);
@@ -257,6 +271,37 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     }
   }
 
+  // TTS
+
+  onTtsAudioStart = (data: any) => {
+    if (this._audioContextAudioSink) this._audioContextAudioSink.dispose()
+    this._audioContextAudioSink = new AudioContextAudioSink({
+      sampleRate: 16000
+    });
+    // cleanup after audio is no longer needed, i.e. after playing it
+    this._audioContextAudioSink.on('ended', () => {
+      let audioData: Int16Array | undefined = this._audioContextAudioSink ? this._audioContextAudioSink.int16Data : undefined;
+      if (audioData && this._audioContextAudioSink) {
+        AudioUtils.writeAudioData16ToFile(audioData, PathUtils.resolve('audio_tts'));
+        this._audioContextAudioSink.dispose();
+        this._audioContextAudioSink = undefined;
+      }
+    });
+  }
+
+  onTtsAudio = (data: any) => {
+    if (this._audioContextAudioSink) this._audioContextAudioSink.writeAudio(data);
+  }
+
+  onTtsAudioEnd = (data: any) => {
+    if (this._audioContextAudioSink) this._audioContextAudioSink.play();
+  }
+
+  onTtsAudioError = (data: any) => {
+    this._audioContextAudioSink?.dispose();
+    this._audioContextAudioSink = undefined;
+  }
+
   // Photo
 
   getBase64Photo = () => {
@@ -304,6 +349,9 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
       case 'btnAsrStop':
         this.stopAsr();
         break;
+      case 'btnTtsStart':
+        this._cognitiveHubClient?.sendTTSCommand(this.state.ttsInput)
+        break;
       case 'btnWavStart':
         let wavFilename = '';
         dialog.showOpenDialog({
@@ -350,6 +398,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
             this._wakewordController.on('cancel', this.stopAsr);
           }
         }
+        break;
       case 'btnPlayMidi':
         AudioFxManager.getInstance().playTone(AudioFxTone.LISTEN_START);
         const startAtTime = new Date().getTime()
@@ -363,6 +412,23 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
 
   onCameraSelected = (deviceId: string) => {
     this.setState({ cameraDeviceId: deviceId })
+  }
+
+  onChangeHandler = (event: any) => {
+    const nativeEvent: any = event.nativeEvent;
+    let updateObj: any = undefined;
+    switch (nativeEvent.target.id) {
+      case 'ttsInput':
+        updateObj = { ttsInput: nativeEvent.target.value };
+        break;
+    }
+    if (updateObj) {
+      this.setState(updateObj);
+    }
+  }
+
+  onBlurHandler = (event: any) => {
+    // this.props.changed(this.state);
   }
 
   render() {
@@ -379,7 +445,12 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
           <AudioEqVisualizer audioDataSource={this.state.visualizerSource} options={{ w: 256, h: 50, tickWidth: 1 }} />
           <textarea className="CognitiveHub" value={this.state.message} readOnly rows={10} />
           <div className='CognitiveHub-row'>
-            <input id='asrResult' type='text' className='form-control' placeholder='input' value={this.state.asrResult} readOnly />
+            <input id='asrResult' type='text' className='form-control' placeholder='ASR/STT Transcript' value={this.state.asrResult} readOnly />
+          </div>
+          <div className='CognitiveHub-row'>
+            <form className='form' role='form' onSubmit={(event: any) => { this.onButtonClicked('btnTtsStart', event) }}>
+              <input id='ttsInput' type='text' className='form-control' placeholder='TTS Input' value={this.state.ttsInput} onChange={this.onChangeHandler} onBlur={this.onBlurHandler} />
+            </form>
           </div>
           <div className='CognitiveHub-row'>
             <button id='btnAsrStart' type='button' className={`btn btn-primary App-button`}
@@ -389,6 +460,10 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
             <button id='btnAsrStop' type='button' className={`btn btn-primary App-button`}
               onClick={(event) => this.onButtonClicked(`btnAsrStop`, event)}>
               AsrStop
+            </button>
+            <button id='btnTtsStart' type='button' className={`btn btn-primary App-button`}
+              onClick={(event) => this.onButtonClicked(`btnTtsStart`, event)}>
+              TtsStart
             </button>
             <button id='btnRecordStart' type='button' className={`btn btn-primary App-button`}
               onClick={(event) => this.onButtonClicked(`btnRecordStart`, event)}>
@@ -423,7 +498,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
           <div className='CognitiveHub-row'>
             {this.state.availableCameraDevices}
           </div>
-          <div className='CognitiveHub-row'>
+          <div className='CognitiveHub-row webcam'>
             <Webcam
               audio={false}
               height={720}
