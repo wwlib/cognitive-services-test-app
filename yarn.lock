@@ -11014,9 +11014,9 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
     hash-base "^3.0.0"
     inherits "^2.0.1"
 
-"robokit-command-system@github:wwlib/robokit-command-system#6860c1d209576701d1297e2528108de603c351a7":
+"robokit-command-system@github:wwlib/robokit-command-system#100e927a9336562f6e840f3961dc91ac8009b3d4":
   version "0.0.1"
-  resolved "https://codeload.github.com/wwlib/robokit-command-system/tar.gz/6860c1d209576701d1297e2528108de603c351a7"
+  resolved "https://codeload.github.com/wwlib/robokit-command-system/tar.gz/100e927a9336562f6e840f3961dc91ac8009b3d4"
   dependencies:
     uuid "^8.3.2"
 

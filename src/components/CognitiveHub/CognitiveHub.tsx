@@ -114,7 +114,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     this._cognitiveHubClient = this.props.model.getCognitiveHubClientController(true);
     if (this._cognitiveHubClient) {
       this._cognitiveHubClient.connect();
-      this._cognitiveHubClient.on('asrEnded', this.onAsrEnded);
+      this._cognitiveHubClient.on('asrEnd', this.onAsrEnded);
       this._cognitiveHubClient.on('clockUpdate', this.onClockUpdate);
       this._cognitiveHubClient.on('getBase64Photo', this.getBase64Photo);
       this._cognitiveHubClient.on('ttsAudioStart', this.onTtsAudioStart);
@@ -129,7 +129,7 @@ export default class CognitiveHub extends React.Component<CognitiveHubProps, Cog
     if (this._wakewordController) this._wakewordController.dispose();
     if (this._cognitiveHubClient) {
       this._cognitiveHubClient.dispose();
-      this._cognitiveHubClient.off('asrEnded', this.onAsrEnded);
+      this._cognitiveHubClient.off('asrEnd', this.onAsrEnded);
       this._cognitiveHubClient.off('clockUpdate', this.onClockUpdate);
       this._cognitiveHubClient.off('getBase64Photo', this.getBase64Photo);
       this._cognitiveHubClient.off('ttsAudioStart', this.onTtsAudioStart);

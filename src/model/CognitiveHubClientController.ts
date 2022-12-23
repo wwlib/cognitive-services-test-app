@@ -247,9 +247,9 @@ export default class CognitiveHubClientController extends EventEmitter {
                 console.log(`asrResult`, data);
             });
 
-            this._socket.on('asrEnded', (data: any) => {
-                console.log(`asrEnded`, data);
-                this.emit('asrEnded', data);
+            this._socket.on('asrEnd', (data: any) => {
+                console.log(`asrEnd`, data);
+                this.emit('asrEnd', data);
             });
 
             // TTS
